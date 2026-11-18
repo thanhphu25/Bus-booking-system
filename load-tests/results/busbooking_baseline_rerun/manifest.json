@@ -1,0 +1,31 @@
+{
+  "timestamp_utc": "2026-11-18T03:36:05.366339+00:00",
+  "stage": "BusBooking Phase 1 baseline",
+  "jar_filename": "busbooking-0.0.1-SNAPSHOT.jar",
+  "jar_sha256": "8e8617379bde21ca967f1d2e4c4d01cad45b57ef6f448f57ce03fb3b68d8731b",
+  "java_version": "openjdk version \"21.0.13.1\" 2026-11-17 LTS",
+  "postgres_client_version": "psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "locust_version": "locust 2.47.0 from /usr/local/lib/python3.13/dist-packages/locust (Python 3.13.18)",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "cpu_model": "AMD EPYC 7B12",
+  "logical_cpus": 4,
+  "ram_total_gb": 31.35,
+  "load_levels": [
+    1,
+    5,
+    10,
+    20
+  ],
+  "duration_each_seconds": 60,
+  "request_mix": {
+    "GET /api/trips": 3,
+    "GET /api/trips/{id}": 1
+  },
+  "wait_time_seconds": "uniform 0.2–0.6",
+  "trip_id_used": "3",
+  "fixture_source": "/tmp/busbooking-repo/load-tests/datasets/busbooking_seed.sql",
+  "measurement_limitations": [
+    "Locust, Java and PostgreSQL share Kaggle CPU",
+    "CPU model can differ across Kaggle sessions"
+  ]
+}

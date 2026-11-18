@@ -1,0 +1,2 @@
+users,duration_seconds,requests,failures,error_pct,rps,avg_ms,p50_ms,p95_ms,p99_ms,java_cpu_avg_pct,java_ram_max_mb
+20,60,2763,0,0.0,46.78634555911023,14.338995851249036,13.0,22.0,38.0,61.229032258064514,659.875

@@ -1,0 +1,3 @@
+Workload,Users,Requests,RPS,Average (ms),p95 (ms),Errors (%),Java CPU (%),Java RAM (MB)
+GET Trip,20,2828,47.9,3.82,5.0,0.0,13.21,553.46
+POST Booking,20,2763,46.79,14.34,22.0,0.0,61.23,659.88

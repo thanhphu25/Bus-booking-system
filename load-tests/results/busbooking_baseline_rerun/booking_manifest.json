@@ -1,0 +1,24 @@
+{
+  "workload": "POST /api/bookings",
+  "users": 20,
+  "duration_seconds": 60,
+  "fixture_trips": 1000,
+  "quantity_per_request": 1,
+  "wait_time": "uniform 0.2-0.6 seconds",
+  "jwt": "Test USER JWT supplied through process environment",
+  "result": {
+    "users": 20,
+    "duration_seconds": 60,
+    "requests": 2763,
+    "failures": 0,
+    "error_pct": 0.0,
+    "rps": 46.78634555911023,
+    "avg_ms": 14.338995851249036,
+    "p50_ms": 13.0,
+    "p95_ms": 22.0,
+    "p99_ms": 38.0,
+    "java_cpu_avg_pct": 61.229032258064514,
+    "java_ram_max_mb": 659.875
+  },
+  "inconsistent_trip_count": 0
+}
