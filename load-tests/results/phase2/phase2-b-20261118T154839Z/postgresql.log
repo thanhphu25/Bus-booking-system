@@ -1,0 +1,38 @@
+2026-11-18 15:48:39.084 UTC [3349] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-11-18 15:48:39.084 UTC [3349] LOG:  listening on IPv4 address "127.0.0.1", port 55433
+2026-11-18 15:48:39.099 UTC [3349] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.55433"
+2026-11-18 15:48:39.124 UTC [3352] LOG:  database system was shut down at 2026-11-18 15:48:31 UTC
+2026-11-18 15:48:39.134 UTC [3349] LOG:  database system is ready to accept connections
+2026-11-18 15:49:28.094 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:49:29.904 UTC [3350] LOG:  checkpoint complete: wrote 1036 buffers (6.3%); 1 WAL file(s) added, 0 removed, 0 recycled; write=0.028 s, sync=1.683 s, total=1.810 s; sync files=359, longest=0.026 s, average=0.005 s; distance=10506 kB, estimate=10506 kB; lsn=0/1F32A20, redo lsn=0/1F329E8
+2026-11-18 15:49:59.994 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:50:00.099 UTC [3350] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.016 s, sync=0.036 s, total=0.106 s; sync files=9, longest=0.013 s, average=0.004 s; distance=6407 kB, estimate=10096 kB; lsn=0/25746B8, redo lsn=0/2574680
+2026-11-18 15:50:30.059 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:50:30.269 UTC [3350] LOG:  checkpoint complete: wrote 108 buffers (0.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.024 s, sync=0.152 s, total=0.211 s; sync files=31, longest=0.027 s, average=0.005 s; distance=6166 kB, estimate=9703 kB; lsn=0/2B7A170, redo lsn=0/2B7A138
+2026-11-18 15:51:01.005 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:51:01.150 UTC [3350] LOG:  checkpoint complete: wrote 15 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.021 s, sync=0.069 s, total=0.146 s; sync files=11, longest=0.016 s, average=0.007 s; distance=6374 kB, estimate=9370 kB; lsn=0/31B39E0, redo lsn=0/31B39A8
+2026-11-18 15:51:31.107 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:51:31.206 UTC [3350] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.024 s, sync=0.039 s, total=0.099 s; sync files=9, longest=0.013 s, average=0.005 s; distance=6381 kB, estimate=9071 kB; lsn=0/37EF160, redo lsn=0/37EF128
+2026-11-18 15:52:00.877 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:52:00.995 UTC [3350] LOG:  checkpoint complete: wrote 40 buffers (0.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.020 s, sync=0.048 s, total=0.119 s; sync files=14, longest=0.011 s, average=0.004 s; distance=5749 kB, estimate=8739 kB; lsn=0/3D8C560, redo lsn=0/3D8C528
+2026-11-18 15:52:31.891 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:52:31.989 UTC [3350] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.017 s, sync=0.036 s, total=0.099 s; sync files=10, longest=0.011 s, average=0.004 s; distance=6388 kB, estimate=8504 kB; lsn=0/43C96E0, redo lsn=0/43C96A8
+2026-11-18 15:53:02.823 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:53:02.925 UTC [3350] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.029 s, sync=0.027 s, total=0.102 s; sync files=9, longest=0.006 s, average=0.003 s; distance=5729 kB, estimate=8226 kB; lsn=0/4961C48, redo lsn=0/4961C10
+2026-11-18 15:53:32.118 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:53:32.214 UTC [3350] LOG:  checkpoint complete: wrote 10 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.027 s, sync=0.027 s, total=0.097 s; sync files=9, longest=0.005 s, average=0.003 s; distance=5629 kB, estimate=7967 kB; lsn=0/4EE1360, redo lsn=0/4EE1328
+2026-11-18 15:54:02.126 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:54:02.230 UTC [3350] LOG:  checkpoint complete: wrote 12 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.016 s, sync=0.041 s, total=0.105 s; sync files=10, longest=0.012 s, average=0.005 s; distance=6401 kB, estimate=7810 kB; lsn=0/5521A28, redo lsn=0/55219F0
+2026-11-18 15:54:33.331 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:54:33.427 UTC [3350] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.024 s, sync=0.039 s, total=0.097 s; sync files=9, longest=0.014 s, average=0.005 s; distance=5729 kB, estimate=7602 kB; lsn=0/5ABA1A8, redo lsn=0/5ABA170
+2026-11-18 15:55:04.131 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:55:04.222 UTC [3350] LOG:  checkpoint complete: wrote 11 buffers (0.1%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.017 s, sync=0.031 s, total=0.092 s; sync files=9, longest=0.013 s, average=0.004 s; distance=6408 kB, estimate=7483 kB; lsn=0/60FC3D0, redo lsn=0/60FC398
+2026-11-18 15:55:04.236 UTC [3350] LOG:  checkpoint starting: immediate force wait
+2026-11-18 15:55:04.298 UTC [3350] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.010 s, total=0.063 s; sync files=3, longest=0.006 s, average=0.004 s; distance=8 kB, estimate=6735 kB; lsn=0/60FE778, redo lsn=0/60FE740
+2026-11-18 15:55:04.408 UTC [3349] LOG:  received fast shutdown request
+2026-11-18 15:55:04.422 UTC [3349] LOG:  aborting any active transactions
+2026-11-18 15:55:04.426 UTC [3349] LOG:  background worker "logical replication launcher" (PID 3355) exited with exit code 1
+2026-11-18 15:55:04.427 UTC [3350] LOG:  shutting down
+2026-11-18 15:55:04.438 UTC [3350] LOG:  checkpoint starting: shutdown immediate
+2026-11-18 15:55:04.486 UTC [3350] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.012 s, total=0.059 s; sync files=4, longest=0.005 s, average=0.003 s; distance=2 kB, estimate=6062 kB; lsn=0/60FF1A0, redo lsn=0/60FF1A0
+2026-11-18 15:55:04.524 UTC [3349] LOG:  database system is shut down

@@ -1,0 +1,19 @@
+[2026-11-18 15:49:48,629] 0df8b997df3e/INFO/locust.main: Starting Locust 2.32.10
+[2026-11-18 15:49:48,630] 0df8b997df3e/INFO/locust.main: Run time limit set to 480 seconds
+[2026-11-18 15:49:48,631] 0df8b997df3e/WARNING/locust.runners: Your selected spawn rate is very high (>100), and this is known to sometimes cause issues. Do you really need to ramp up that fast?
+[2026-11-18 15:49:48,631] 0df8b997df3e/INFO/locust.runners: Ramping to 20 users at a rate of 200.00 per second
+[2026-11-18 15:49:48,632] 0df8b997df3e/INFO/locust.runners: All users spawned: {"BookingUser": 20} (20 total users)
+[2026-11-18 15:49:50,120] 0df8b997df3e/INFO/locust.main: Shutting down (exit code 0)
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+POST     booking/first                                                                    100     0(0.00%) |    280      93     655    210 |   68.43        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       100     0(0.00%) |    280      93     655    210 |   68.43        0.00
+
+Response time percentiles (approximated)
+Type     Name                                                                                  50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+POST     booking/first                                                                         210    250    280    550    590    640    650    660    660    660    660    100
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+         Aggregated                                                                            210    250    280    550    590    640    650    660    660    660    660    100
+

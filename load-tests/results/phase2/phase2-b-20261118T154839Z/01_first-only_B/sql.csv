@@ -1,0 +1,17 @@
+queryid,query,calls,exec_ms,rows
+7531226280969369476,"select le1_0.id,le1_0.address,le1_0.name,le1_0.province from locations le1_0 where le1_0.id=$1",2000,34.329798000000046,2000
+6650430479887907887,BEGIN,1000,1.071650000000002,0
+1637407606667381779,BEGIN READ ONLY,1000,10.749820000000001,0
+-1056801397825659111,"INSERT INTO booking_idempotency_keys (user_id, idempotency_key, fingerprint)
+VALUES ($1, $2, $3) ON CONFLICT (user_id, idempotency_key) DO NOTHING",1000,150.51987699999958,1000
+2933532422378517030,SHOW TRANSACTION ISOLATION LEVEL,1000,6.293117999999991,0
+5921450740320099147,"UPDATE booking_idempotency_keys SET booking_id = $1
+WHERE user_id = $2 AND idempotency_key = $3 AND booking_id IS NULL",1000,197.5159450000001,1000
+-7968894794618983137,"insert into bookings (booked_at,booking_code,passenger_name,passenger_phone,quantity,status,total_amount,trip_id,unit_price,user_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+RETURNING *",1000,247.18543100000053,1000
+6638031705889792025,"select oe1_0.id,oe1_0.address,oe1_0.created_at,oe1_0.email,oe1_0.name,oe1_0.phone,oe1_0.status from bus_operators oe1_0 where oe1_0.id=$1",1000,17.254222999999985,1000
+-2488099710011506108,"select re1_0.id,re1_0.destination_id,re1_0.estimated_duration_minutes,re1_0.origin_id,re1_0.status from routes re1_0 where re1_0.id=$1",1000,16.91663600000001,1000
+-1707276825770153707,"select te1_0.id,te1_0.arrival_time,te1_0.available_seats,te1_0.created_at,te1_0.departure_time,te1_0.price,te1_0.route_id,te1_0.status,te1_0.vehicle_id from trips te1_0 where te1_0.id=$1 for no key update of te1_0",1000,42.53919999999994,1000
+-2239565178738179313,"select ue1_0.id,ue1_0.created_at,ue1_0.email,ue1_0.email_verified,ue1_0.full_name,ue1_0.password,ue1_0.phone,ue1_0.role_id,r1_0.id,r1_0.name,ue1_0.status,ue1_0.updated_at from users ue1_0 join roles r1_0 on r1_0.id=ue1_0.role_id where ue1_0.id=$1",1000,29.901740000000014,1000
+6020323665262892418,"select ve1_0.id,ve1_0.created_at,ve1_0.license_plate,ve1_0.operator_id,ve1_0.seat_capacity,ve1_0.status,ve1_0.vehicle_type from vehicles ve1_0 where ve1_0.id=$1",1000,20.311077,1000
+-5460688591558525474,update trips te1_0 set available_seats=(te1_0.available_seats+$1) where te1_0.id=$2 and (te1_0.available_seats+$3)>=$4,1000,134.2469969999999,1000

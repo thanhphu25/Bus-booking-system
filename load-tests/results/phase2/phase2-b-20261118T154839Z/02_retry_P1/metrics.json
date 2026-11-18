@@ -1,0 +1,72 @@
+{
+  "variant": "P1",
+  "workload": "retry",
+  "started_at_utc": "2026-11-18T15:52:52.238514+00:00",
+  "ended_at_utc": "2026-11-18T15:53:02.603254+00:00",
+  "seconds": 8.009321502,
+  "requests": 1200,
+  "successful_requests": 1200,
+  "errors": {},
+  "http_statuses": {
+    "201": 1200
+  },
+  "rps": 149.8254252498603,
+  "successful_rps": 149.8254252498603,
+  "response_bytes": 290424,
+  "sql_calls": 13200,
+  "latency_ms": {
+    "first_attempt": {
+      "requests": 1000,
+      "p50": 120.48376,
+      "p95": 193.591199
+    },
+    "retry_attempt": {
+      "requests": 200,
+      "p50": 121.300295,
+      "p95": 210.571576
+    },
+    "created_201": {
+      "requests": 1200,
+      "p50": 120.815883,
+      "p95": 194.787784
+    },
+    "replayed_200": {
+      "requests": 0,
+      "p50": null,
+      "p95": null
+    }
+  },
+  "resources": {
+    "java": {
+      "samples": 37,
+      "sampled_seconds": 7.696579627,
+      "cpu_seconds_sampled": 26.099999999999994,
+      "peak_rss_mib": 577.51953125
+    },
+    "postgresql": {
+      "samples": 37,
+      "sampled_seconds": 7.696579627,
+      "cpu_seconds_sampled": 2.31,
+      "peak_rss_mib": 402.5859375
+    },
+    "locust": {
+      "samples": 37,
+      "sampled_seconds": 7.696579627,
+      "cpu_seconds_sampled": 1.2099999999999995,
+      "peak_rss_mib": 58.89453125
+    }
+  },
+  "intents": 1000,
+  "acknowledged_intents": 1000,
+  "persisted_intents": 1000,
+  "bookings": 1200,
+  "duplicate_bookings": 200,
+  "seats_deducted": 1200,
+  "extra_seats": 200,
+  "unbalanced_trips": 0,
+  "concurrent_pairs": 100,
+  "overlapping_pairs": 100,
+  "intent_mismatches": 0,
+  "keys_match": true,
+  "checked": true
+}

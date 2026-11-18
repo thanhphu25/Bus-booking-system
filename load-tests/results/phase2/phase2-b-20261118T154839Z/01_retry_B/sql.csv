@@ -1,0 +1,20 @@
+queryid,query,calls,exec_ms,rows
+7531226280969369476,"select le1_0.id,le1_0.address,le1_0.name,le1_0.province from locations le1_0 where le1_0.id=$1",2000,33.656354,2000
+6650430479887907887,BEGIN,1200,1.2503809999999982,0
+1637407606667381779,BEGIN READ ONLY,1200,12.746408999999991,0
+-8985985236691983902,"INSERT INTO booking_idempotency_keys (user_id, idempotency_key, fingerprint)
+VALUES ($1, $2, $3) ON CONFLICT (user_id, idempotency_key) DO NOTHING",1200,2502.7740620000054,1000
+2933532422378517030,SHOW TRANSACTION ISOLATION LEVEL,1200,7.618870000000002,0
+-2239565178738179313,"select ue1_0.id,ue1_0.created_at,ue1_0.email,ue1_0.email_verified,ue1_0.full_name,ue1_0.password,ue1_0.phone,ue1_0.role_id,r1_0.id,r1_0.name,ue1_0.status,ue1_0.updated_at from users ue1_0 join roles r1_0 on r1_0.id=ue1_0.role_id where ue1_0.id=$1",1200,40.73473300000012,1200
+-6943158352547850705,"UPDATE booking_idempotency_keys SET booking_id = $1
+WHERE user_id = $2 AND idempotency_key = $3 AND booking_id IS NULL",1000,273.37803100000025,1000
+-7968894794618983137,"insert into bookings (booked_at,booking_code,passenger_name,passenger_phone,quantity,status,total_amount,trip_id,unit_price,user_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+RETURNING *",1000,244.8273099999999,1000
+6638031705889792025,"select oe1_0.id,oe1_0.address,oe1_0.created_at,oe1_0.email,oe1_0.name,oe1_0.phone,oe1_0.status from bus_operators oe1_0 where oe1_0.id=$1",1000,17.68238900000001,1000
+-2488099710011506108,"select re1_0.id,re1_0.destination_id,re1_0.estimated_duration_minutes,re1_0.origin_id,re1_0.status from routes re1_0 where re1_0.id=$1",1000,27.35190599999998,1000
+-1707276825770153707,"select te1_0.id,te1_0.arrival_time,te1_0.available_seats,te1_0.created_at,te1_0.departure_time,te1_0.price,te1_0.route_id,te1_0.status,te1_0.vehicle_id from trips te1_0 where te1_0.id=$1 for no key update of te1_0",1000,44.745116000000074,1000
+6020323665262892418,"select ve1_0.id,ve1_0.created_at,ve1_0.license_plate,ve1_0.operator_id,ve1_0.seat_capacity,ve1_0.status,ve1_0.vehicle_type from vehicles ve1_0 where ve1_0.id=$1",1000,18.321954000000012,1000
+-5460688591558525474,update trips te1_0 set available_seats=(te1_0.available_seats+$1) where te1_0.id=$2 and (te1_0.available_seats+$3)>=$4,1000,126.20180800000006,1000
+-4569212478361083765,"SELECT fingerprint, booking_id FROM booking_idempotency_keys
+WHERE user_id = $1 AND idempotency_key = $2",200,5.114201,200
+7782666314321713884,"select be1_0.id,be1_0.booked_at,be1_0.booking_code,be1_0.passenger_name,be1_0.passenger_phone,be1_0.quantity,be1_0.status,be1_0.total_amount,be1_0.trip_id,be1_0.unit_price,be1_0.user_id from bookings be1_0 where be1_0.id=$1",200,5.905353999999999,200

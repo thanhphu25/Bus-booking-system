@@ -1,0 +1,21 @@
+[2026-11-18 15:50:22,486] 0df8b997df3e/INFO/locust.main: Starting Locust 2.32.10
+[2026-11-18 15:50:22,490] 0df8b997df3e/INFO/locust.main: Run time limit set to 480 seconds
+[2026-11-18 15:50:22,490] 0df8b997df3e/WARNING/locust.runners: Your selected spawn rate is very high (>100), and this is known to sometimes cause issues. Do you really need to ramp up that fast?
+[2026-11-18 15:50:22,491] 0df8b997df3e/INFO/locust.runners: Ramping to 20 users at a rate of 200.00 per second
+[2026-11-18 15:50:22,492] 0df8b997df3e/INFO/locust.runners: All users spawned: {"BookingUser": 20} (20 total users)
+[2026-11-18 15:50:29,543] 0df8b997df3e/INFO/locust.main: Shutting down (exit code 0)
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+POST     booking/first                                                                   1000     0(0.00%) |    107      27     275    100 |  142.91        0.00
+POST     booking/retry                                                                    200     0(0.00%) |    106      36     236    100 |   28.58        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                      1200     0(0.00%) |    107      27     275    100 |  171.49        0.00
+
+Response time percentiles (approximated)
+Type     Name                                                                                  50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+POST     booking/first                                                                         100    120    130    140    160    180    200    220    280    280    280   1000
+POST     booking/retry                                                                         100    110    130    130    160    180    210    210    240    240    240    200
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+         Aggregated                                                                            100    120    130    140    160    180    200    220    270    280    280   1200
+
