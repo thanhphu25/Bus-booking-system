@@ -105,13 +105,14 @@ Khi kết nối database thành công, **Flyway kiểm tra/áp dụng các migra
 | [6 Hướng dẫn chạy](docs/06-running-guide.md) | Cấu hình, khởi chạy, kiểm tra và xử lý lỗi |
 | [7 Kết quả kiểm thử tải](load-tests/README.md) | Kết quả baseline Locust, CSV và console |
 | [8 Hướng dẫn kiểm thử tải](load-tests/scripts/load_testing.md) | Hướng dẫn chạy Locust, tạo fixture và phân tích kết quả |
+| [9 Đối chứng Pha 2B](load-tests/phase2/b/README.md) | Notebook Kaggle và đối soát booking khi gửi lại request |
 
 > **Lưu ý:** Không commit `.env`, mật khẩu, JWT/OTP secret hay dữ liệu cá nhân thật. Khi thay đổi database, tạo migration Flyway mới thay vì sửa migration đã áp dụng.
 
 ### Gợi ý cải tiến cho Pha 2
 
 - **PostgreSQL và tìm kiếm chuyến xe:** Truy vấn hiện trả về toàn bộ danh sách, còn một số index tăng tốc đã được hoãn ở V16; nên phân tích bằng `EXPLAIN ANALYZE` trên dữ liệu đại diện để chọn index phù hợp và bổ sung phân trang.
-- **Booking đồng thời:** Pha 1 đã có transaction, khóa bi quan và cập nhật ghế có điều kiện; khi tải lớn, cần đo thời gian chờ khóa để tối ưu thời gian giữ khóa, timeout và connection pool. Cân nhắc cơ chế idempotency để tránh tạo booking lặp khi client gửi lại yêu cầu.
+- **Booking đồng thời:** Pha 1 đã có transaction, khóa bi quan và cập nhật ghế có điều kiện. Pha 2B bổ sung `Idempotency-Key` để tránh tạo booking lặp khi client gửi lại yêu cầu. Đo thời gian giữ khóa và tối ưu đường đọc Trip lúc tạo vé thuộc Pha 2C.
 - **Redis Cache cho API đọc:** Các lượt đọc lặp lại có thể làm tăng tải PostgreSQL; cân nhắc cache địa điểm và kết quả tìm chuyến với TTL, cơ chế vô hiệu hóa khi dữ liệu thay đổi. Số ghế khi đặt vé vẫn phải được kiểm tra và cập nhật tại database trong transaction.
 - **Monitoring và logging:** Bổ sung metric độ trễ API, lỗi, connection pool và thời gian chờ khóa để hỗ trợ phát hiện điểm nghẽn. Chuẩn hóa log có mã liên kết request và cảnh báo, đồng thời che thông tin nhạy cảm.
 - **Mở rộng, Docker và CI/CD:** Trên nền Dockerfile/Compose hiện có, chuẩn hóa cấu hình triển khai, bổ sung health check cho backend và pipeline kiểm thử, build image, triển khai. Trước khi chạy nhiều backend instance, cần đưa bộ đếm rate limit đang lưu trong bộ nhớ sang cơ chế dùng chung.

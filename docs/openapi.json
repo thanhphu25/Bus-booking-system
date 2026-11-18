@@ -481,7 +481,22 @@
                 "tags": [
                     "booking-controller"
                 ],
+                "summary": "Create a booking or replay an existing booking for the authenticated user",
                 "operationId": "create",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "Reuse this key for the same purchase intent",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -494,11 +509,51 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Existing booking with its current status",
                         "content": {
-                            "*/*": {
+                            "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/BookingResponse"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "Booking created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BookingResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or Idempotency-Key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "IDEMPOTENCY_KEY_REUSED or INSUFFICIENT_SEATS",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "BOOKING_CLAIM_TIMEOUT. Retry with the same key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }

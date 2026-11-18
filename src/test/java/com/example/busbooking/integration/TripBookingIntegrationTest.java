@@ -14,16 +14,20 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -39,6 +43,7 @@ class TripBookingIntegrationTest {
     @Autowired JwtService jwt;
     @Autowired BookingService bookingService;
     @Autowired ObjectMapper json;
+    @Autowired PlatformTransactionManager transactionManager;
 
     private final String fixture = "it_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
     private Long userId;
@@ -77,6 +82,7 @@ class TripBookingIntegrationTest {
 
     @AfterEach
     void clean() {
+        jdbc.update("DELETE FROM booking_idempotency_keys WHERE user_id IN (?, ?, ?)", userId, otherUserId, adminId);
         jdbc.update("DELETE FROM bookings WHERE user_id IN (?, ?, ?)", userId, otherUserId, adminId);
         jdbc.update("DELETE FROM trips WHERE route_id = ?", routeId);
         jdbc.update("DELETE FROM vehicles WHERE id = ?", vehicleId);
@@ -194,19 +200,12 @@ class TripBookingIntegrationTest {
                 """.formatted(tripId);
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {
-            Callable<Integer> request = () -> mvc.perform(post("/api/bookings")
-                            .header("Authorization", "Bearer " + jwt.issue(userId).value())
-                            .contentType(APPLICATION_JSON).content(body))
-                    .andReturn().getResponse().getStatus();
-            Future<Integer> first = pool.submit(request);
-            Future<Integer> second = pool.submit(request);
-            int firstStatus = first.get(20, TimeUnit.SECONDS);
-            int secondStatus = second.get(20, TimeUnit.SECONDS);
-            assertNotEquals(firstStatus, secondStatus);
-            assertThat(java.util.List.of(firstStatus, secondStatus))
+            Future<MvcResult> first = pool.submit(() -> postBooking(userId, "first-intent", body).andReturn());
+            Future<MvcResult> second = pool.submit(() -> postBooking(userId, "second-intent", body).andReturn());
+            assertThat(List.of(first.get(20, TimeUnit.SECONDS).getResponse().getStatus(),
+                    second.get(20, TimeUnit.SECONDS).getResponse().getStatus()))
                     .containsExactlyInAnyOrder(201, 409);
-            assertThat(jdbc.queryForObject("SELECT available_seats FROM trips WHERE id = ?", Integer.class, tripId)).isZero();
-            assertThat(jdbc.queryForObject("SELECT count(*) FROM bookings WHERE trip_id = ?", Long.class, tripId)).isEqualTo(1L);
+            assertBookingState(1, 0, 1);
         } finally {
             pool.shutdownNow();
         }
@@ -216,13 +215,182 @@ class TripBookingIntegrationTest {
     @Order(6)
     void bookingSaveFailureRollsBackSeatReservation() {
         assertThatThrownBy(() -> bookingService.create(
-                userId, tripId, " ", "0901234567", 1))
+                userId, tripId, " ", "0901234567", 1, "retry-after-failure"))
                 .isInstanceOf(DataIntegrityViolationException.class);
+        assertBookingState(0, 4, 0);
+        assertThat(bookingService.create(userId, tripId, "Passenger", "0901234567", 1, "retry-after-failure")
+                .replayed()).isFalse();
+        assertBookingState(1, 3, 1);
+    }
 
-        assertThat(jdbc.queryForObject("SELECT available_seats FROM trips WHERE id = ?", Integer.class, tripId))
-                .isEqualTo(4);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM bookings WHERE trip_id = ?", Long.class, tripId))
-                .isZero();
+    @Test
+    void replayMatchesValidatedFieldsRegardlessOfJsonOrderAndReturnsCancelledBooking() throws Exception {
+        String key = "Purchase.1:test_key";
+        var created = postBooking(userId, key, bookingBody("A: B"))
+                .andExpect(status().isCreated()).andReturn();
+        long id = bookingId(created);
+
+        String reordered = """
+                {"quantity":1,"passengerPhone":"0901234567","passengerName":"A: B","tripId":%d}
+                """.formatted(tripId);
+        postBooking(userId, key, reordered)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id));
+        postBooking(userId, key, bookingBody("A:  B"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.error").value("IDEMPOTENCY_KEY_REUSED"));
+        var other = postBooking(otherUserId, key, reordered).andExpect(status().isCreated()).andReturn();
+        assertThat(bookingId(other)).isNotEqualTo(id);
+        assertBookingState(2, 2, 2);
+
+        mvc.perform(delete("/api/bookings/" + id).header("Authorization", "Bearer " + jwt.issue(userId).value()))
+                .andExpect(status().isOk());
+        postBooking(userId, key, reordered).andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id)).andExpect(jsonPath("$.status").value("CANCELLED"));
+        assertBookingState(2, 3, 2);
+    }
+
+    @Test
+    void rejectsMalformedAndRepeatedHeadersWithoutWriting() throws Exception {
+        for (String key : List.of("", " ", "abc/def", "café", "a".repeat(129))) {
+            postBooking(userId, key, bookingBody("Passenger")).andExpect(status().isBadRequest());
+        }
+        mvc.perform(post("/api/bookings").header("Authorization", "Bearer " + jwt.issue(userId).value())
+                        .header("Idempotency-Key", "first", "second")
+                        .contentType(APPLICATION_JSON).content(bookingBody("Passenger")))
+                .andExpect(status().isBadRequest());
+        assertBookingState(0, 4, 0);
+        postBooking(userId, "a".repeat(128), bookingBody("Passenger")).andExpect(status().isCreated());
+        assertBookingState(1, 3, 1);
+    }
+
+    @Test
+    void waitingDuplicateReplaysAfterWinnerCommits() throws Exception {
+        BookingService.CreateResult winner = runWithWaitingRequest(false, 200, "Passenger");
+        assertThat(winner.replayed()).isFalse();
+        assertBookingState(1, 3, 1);
+    }
+
+    @Test
+    void waitingDuplicateCanClaimAfterWinnerRollsBack() throws Exception {
+        runWithWaitingRequest(true, 201, "Other passenger");
+        assertThat(jdbc.queryForObject("SELECT passenger_name FROM bookings WHERE trip_id = ?", String.class, tripId))
+                .isEqualTo("Other passenger");
+        assertBookingState(1, 3, 1);
+    }
+
+    private BookingService.CreateResult runWithWaitingRequest(boolean rollBack, int expectedStatus, String passenger)
+            throws Exception {
+        String key = "concurrent-intent";
+        String application = "booking_" + fixture;
+        var ready = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var winner = pool.submit(() -> holdBooking(key, ready, release, rollBack));
+            try {
+                assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+                var waiter = pool.submit(() -> readCommitted().execute(status -> {
+                    jdbc.queryForObject("SELECT set_config('application_name', ?, true)", String.class, application);
+                    try {
+                        return postBooking(userId, key, bookingBody(passenger)).andReturn();
+                    } catch (Exception error) {
+                        throw new IllegalStateException(error);
+                    }
+                }));
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+                boolean waiting = false;
+                while (System.nanoTime() < deadline && !waiter.isDone()) {
+                    waiting = Boolean.TRUE.equals(jdbc.queryForObject("""
+                            SELECT EXISTS (SELECT FROM pg_stat_activity
+                            WHERE application_name = ? AND wait_event_type = 'Lock')
+                            """, Boolean.class, application));
+                    if (waiting) break;
+                    Thread.sleep(20);
+                }
+                assertThat(waiting).isTrue();
+                release.countDown();
+                MvcResult response = waiter.get(10, TimeUnit.SECONDS);
+                var created = winner.get(10, TimeUnit.SECONDS);
+                assertThat(response.getResponse().getStatus()).isEqualTo(expectedStatus);
+                if (!rollBack) assertThat(bookingId(response)).isEqualTo(created.booking().getId());
+                return created;
+            } finally {
+                release.countDown();
+            }
+        }
+    }
+
+    @Test
+    void claimLockTimeoutReturns503AndCanBeRetried() throws Exception {
+        String key = "timed-out-intent";
+        var ready = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        try (var pool = Executors.newSingleThreadExecutor()) {
+            var winner = pool.submit(() -> holdBooking(key, ready, release, false));
+            try {
+                assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+                readCommitted().executeWithoutResult(status -> {
+                    jdbc.execute("SET LOCAL lock_timeout = '250ms'");
+                    try {
+                        postBooking(userId, key, bookingBody("Passenger")).andExpect(status().isServiceUnavailable())
+                                .andExpect(jsonPath("$.error").value("BOOKING_CLAIM_TIMEOUT"));
+                    } catch (Exception error) {
+                        throw new IllegalStateException(error);
+                    } finally {
+                        status.setRollbackOnly();
+                    }
+                });
+                assertBookingState(0, 4, 0);
+            } finally {
+                release.countDown();
+            }
+            long bookingId = winner.get(10, TimeUnit.SECONDS).booking().getId();
+            postBooking(userId, key, bookingBody("Passenger")).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(bookingId));
+            assertBookingState(1, 3, 1);
+        }
+    }
+
+    private BookingService.CreateResult holdBooking(String key, CountDownLatch ready, CountDownLatch release, boolean rollBack) {
+        return readCommitted().execute(status -> {
+            assertThat(jdbc.queryForObject("SHOW transaction_isolation", String.class)).isEqualTo("read committed");
+            var booking = bookingService.create(userId, tripId, "Passenger", "0901234567", 1, key);
+            ready.countDown();
+            try {
+                assertThat(release.await(20, TimeUnit.SECONDS)).isTrue();
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(error);
+            }
+            if (rollBack) status.setRollbackOnly();
+            return booking;
+        });
+    }
+
+    private TransactionTemplate readCommitted() {
+        var transaction = new TransactionTemplate(transactionManager);
+        transaction.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+        return transaction;
+    }
+
+    private ResultActions postBooking(Long owner, String key, String body) throws Exception {
+        return mvc.perform(post("/api/bookings").header("Authorization", "Bearer " + jwt.issue(owner).value())
+                .header("Idempotency-Key", key).contentType(APPLICATION_JSON).content(body));
+    }
+
+    private String bookingBody(String passenger) {
+        return """
+                {"tripId":%d,"passengerName":"%s","passengerPhone":"0901234567","quantity":1}
+                """.formatted(tripId, passenger);
+    }
+
+    private long bookingId(MvcResult response) throws Exception {
+        return json.readValue(response.getResponse().getContentAsString(), BookingResponse.class).id();
+    }
+
+    private void assertBookingState(long bookings, int seats, long keys) {
+        assertThat(jdbc.queryForObject("SELECT available_seats FROM trips WHERE id = ?", Integer.class, tripId)).isEqualTo(seats);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM bookings WHERE trip_id = ?", Long.class, tripId)).isEqualTo(bookings);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM booking_idempotency_keys WHERE user_id IN (?, ?)",
+                Long.class, userId, otherUserId)).isEqualTo(keys);
     }
 
     private Long roleId(String name) {

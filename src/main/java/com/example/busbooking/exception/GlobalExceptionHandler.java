@@ -136,6 +136,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return reply(request, 409, "INSUFFICIENT_SEATS", error.getMessage(), Map.of(), new HttpHeaders());
     }
 
+    @ExceptionHandler(IdempotencyKeyReusedException.class)
+    public ResponseEntity<Object> idempotencyKeyReused(WebRequest request) {
+        return reply(request, 409, "IDEMPOTENCY_KEY_REUSED", "Idempotency-Key is already used for a different booking request",
+                Map.of(), new HttpHeaders());
+    }
+
+    @ExceptionHandler(BookingClaimTimeoutException.class)
+    public ResponseEntity<Object> bookingClaimTimeout(WebRequest request) {
+        return reply(request, 503, "BOOKING_CLAIM_TIMEOUT", "Retry the booking with the same Idempotency-Key",
+                Map.of(), new HttpHeaders());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> unexpected(WebRequest request) {
         // Do not serialize SQL, credentials, rejected values or exception messages.

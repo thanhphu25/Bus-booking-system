@@ -144,6 +144,7 @@ Ví dụ tạo Booking:
 POST /api/bookings
 Content-Type: application/json
 Authorization: Bearer <token>
+Idempotency-Key: purchase-01J7M4QZ
 ```
 
 ```json
@@ -155,7 +156,17 @@ Authorization: Bearer <token>
 }
 ```
 
-Tạo thành công: `201 Created`, response chứa thông tin Booking (mã Booking, chuyến xe, số lượng, giá, trạng thái, thời điểm đặt). Booking đã hủy có trạng thái `CANCELLED`; các Booking hợp lệ mới được tạo có trạng thái `CONFIRMED` theo hợp đồng hiện tại.
+Khi tạo thành công, API trả `201 Created` cùng thông tin Booking. Booking mới có trạng thái `CONFIRMED`.
+
+`Idempotency-Key` là header tùy chọn, dài 1–128 ký tự ASCII trong tập `[A-Za-z0-9._:-]`. Client giữ cùng key cho mọi lần gửi của một ý định mua và dùng key mới khi mua lần khác. Khóa được lưu theo từng user và theo vòng đời Booking.
+
+| Trường hợp | Kết quả |
+|---|---|
+| Không gửi key hoặc tạo thành công với key mới | `201 Created` |
+| Cùng user, key và payload đã xử lý thành công | `200 OK`, cùng ID và trạng thái hiện tại, kể cả `CANCELLED` |
+| Cùng user và key, thay đổi một trường trong payload | `409 IDEMPOTENCY_KEY_REUSED` |
+| Header rỗng hoặc sai định dạng | `400 INVALID_REQUEST` |
+| PostgreSQL hết thời gian chờ khi giành key | `503 BOOKING_CLAIM_TIMEOUT`, client có thể gửi lại cùng key |
 
 **Tính nhất quán:** `BookingService` dùng `@Transactional`; tạo Booking khóa Trip bằng `PESSIMISTIC_WRITE`, giảm ghế bằng update có điều kiện không âm rồi lưu Booking. Hủy khóa Booking rồi Trip, kiểm tra capacity, hoàn ghế rồi đổi trạng thái. Hết ghế trả `409 INSUFFICIENT_SEATS`; Trip không `SCHEDULED`, hủy lặp hoặc không thể hoàn ghế trả `400 BUSINESS_ERROR`. Không coi mọi `409` là sự cố hạ tầng.
 

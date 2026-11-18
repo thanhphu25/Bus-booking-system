@@ -54,16 +54,31 @@ class BookingControllerTest {
         when(request.passengerName()).thenReturn("Nguyen Van A");
         when(request.passengerPhone()).thenReturn("0901234567");
         when(request.quantity()).thenReturn(2);
-        when(bookingService.create(7L, 15L, "Nguyen Van A", "0901234567", 2))
-                .thenReturn(booking);
+        when(bookingService.create(7L, 15L, "Nguyen Van A", "0901234567", 2, null))
+                .thenReturn(new BookingService.CreateResult(booking, false));
         when(mapper.toResponse(booking)).thenReturn(response);
 
-        ResponseEntity<BookingResponse> result = bookingController.create(request, auth);
+        ResponseEntity<BookingResponse> result = bookingController.create(request, null, auth);
 
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         assertSame(response, result.getBody());
-        verify(bookingService).create(7L, 15L, "Nguyen Van A", "0901234567", 2);
+        verify(bookingService).create(7L, 15L, "Nguyen Van A", "0901234567", 2, null);
         verify(mapper).toResponse(booking);
+    }
+
+    @Test
+    void create_withReplayedKey_shouldReturn200() {
+        BookingRequest request = new BookingRequest(15L, "A", "0901234567", 1);
+        Booking booking = mock(Booking.class);
+        BookingResponse response = mock(BookingResponse.class);
+        when(bookingService.create(7L, 15L, "A", "0901234567", 1, "Purchase.1:test_key"))
+                .thenReturn(new BookingService.CreateResult(booking, true));
+        when(mapper.toResponse(booking)).thenReturn(response);
+
+        var result = bookingController.create(request, "Purchase.1:test_key", authentication("7", "ROLE_USER"));
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertSame(response, result.getBody());
     }
 
     @Test
@@ -137,7 +152,7 @@ class BookingControllerTest {
 
         ForbiddenOperationException exception = assertThrows(
                 ForbiddenOperationException.class,
-                () -> bookingController.create(request, auth)
+                () -> bookingController.create(request, null, auth)
         );
 
         assertEquals("Authentication is required", exception.getMessage());

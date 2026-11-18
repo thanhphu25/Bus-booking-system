@@ -1,5 +1,6 @@
 package com.example.busbooking.business;
 
+import com.example.busbooking.business.port.repository.BookingIdempotencyRepository;
 import com.example.busbooking.business.port.repository.BookingRepository;
 import com.example.busbooking.business.port.repository.TripRepository;
 import com.example.busbooking.business.service.BookingService;
@@ -8,6 +9,7 @@ import com.example.busbooking.domain.enums.TripStatus;
 import com.example.busbooking.domain.exception.BusinessException;
 import com.example.busbooking.domain.exception.ForbiddenOperationException;
 import com.example.busbooking.domain.exception.InsufficientSeatsException;
+import com.example.busbooking.domain.exception.IdempotencyKeyReusedException;
 import com.example.busbooking.domain.exception.ResourceNotFoundException;
 import com.example.busbooking.domain.model.Booking;
 import com.example.busbooking.domain.model.Trip;
@@ -39,6 +41,8 @@ class BookingServiceTest {
 
     @Mock
     private TripRepository tripRepository;
+    @Mock
+    private BookingIdempotencyRepository idempotencyRepository;
 
     @InjectMocks
     private BookingService bookingService;
@@ -70,6 +74,56 @@ class BookingServiceTest {
         assertNotNull(newBooking.getBookingCode());
         assertTrue(newBooking.getBookingCode().startsWith("BK-"));
         verify(tripRepository).updateAvailableSeats(TRIP_ID, -2);
+        verifyNoInteractions(idempotencyRepository);
+    }
+
+    @Test
+    void create_withClaimedKey_shouldUseThePersistedBookingId() {
+        Trip trip = mock(Trip.class);
+        Booking booking = mock(Booking.class);
+        when(idempotencyRepository.claim(eq(USER_ID), eq("intent-1"), anyString())).thenReturn(true);
+        when(tripRepository.findByIdForUpdate(TRIP_ID)).thenReturn(Optional.of(trip));
+        when(trip.getStatus()).thenReturn(TripStatus.SCHEDULED);
+        when(trip.getAvailableSeats()).thenReturn(5);
+        when(trip.getPrice()).thenReturn(BigDecimal.TEN);
+        when(tripRepository.updateAvailableSeats(TRIP_ID, -1)).thenReturn(true);
+        when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+        when(booking.getId()).thenReturn(BOOKING_ID);
+
+        assertEquals(new BookingService.CreateResult(booking, false),
+                bookingService.create(USER_ID, TRIP_ID, "A", "0901234567", 1, "intent-1"));
+
+        var order = inOrder(idempotencyRepository, tripRepository, bookingRepository);
+        order.verify(idempotencyRepository).claim(eq(USER_ID), eq("intent-1"), anyString());
+        order.verify(tripRepository).findByIdForUpdate(TRIP_ID);
+        order.verify(bookingRepository).save(any(Booking.class));
+        order.verify(idempotencyRepository).complete(USER_ID, "intent-1", BOOKING_ID);
+    }
+
+    @Test
+    void create_withReplayedKey_shouldReadBookingWithoutAccessingTrip() {
+        Booking booking = mock(Booking.class);
+        when(idempotencyRepository.find(USER_ID, "intent-1")).thenAnswer(call -> {
+            var captor = ArgumentCaptor.forClass(String.class);
+            verify(idempotencyRepository).claim(eq(USER_ID), eq("intent-1"), captor.capture());
+            return Optional.of(new BookingIdempotencyRepository.Claim(captor.getValue(), BOOKING_ID));
+        });
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        assertEquals(new BookingService.CreateResult(booking, true),
+                bookingService.create(USER_ID, TRIP_ID, "A", "0901234567", 1, "intent-1"));
+        verifyNoInteractions(tripRepository);
+        verifyNoMoreInteractions(bookingRepository);
+    }
+
+    @Test
+    void create_withDifferentFingerprint_shouldRejectBeforeReadingTripOrBooking() {
+        when(idempotencyRepository.find(USER_ID, "intent-1"))
+                .thenReturn(Optional.of(new BookingIdempotencyRepository.Claim("different", BOOKING_ID)));
+
+        assertThrows(IdempotencyKeyReusedException.class,
+                () -> bookingService.create(USER_ID, TRIP_ID, "A", "0901234567", 1, "intent-1"));
+        verifyNoInteractions(tripRepository, bookingRepository);
     }
 
     @Test

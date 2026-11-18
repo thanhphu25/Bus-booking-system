@@ -268,6 +268,11 @@ class AuthHttpIntegrationTest {
         mvc.perform(options("/api/auth/login").header("Origin", "https://evil.example")
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN"));
+        mvc.perform(options("/api/bookings").header("Origin", "https://client.example")
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "Authorization,Content-Type,Idempotency-Key"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Headers", containsString("Idempotency-Key")));
     }
 
     @Test
@@ -282,7 +287,11 @@ class AuthHttpIntegrationTest {
                 .andExpect(jsonPath("$.paths['/api/auth/login'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/auth/register'].post.responses['201']").exists())
                 .andExpect(jsonPath("$.paths['/api/auth/verify-email'].post.responses['204']").exists())
-                .andExpect(jsonPath("$.paths['/api/auth/resend-verification'].post.responses['202']").exists());
+                .andExpect(jsonPath("$.paths['/api/auth/resend-verification'].post.responses['202']").exists())
+                .andExpect(jsonPath("$.paths['/api/bookings'].post.parameters[0].name").value("Idempotency-Key"))
+                .andExpect(jsonPath("$.paths['/api/bookings'].post.responses['200']").exists())
+                .andExpect(jsonPath("$.paths['/api/bookings'].post.responses['201']").exists())
+                .andExpect(jsonPath("$.paths['/api/bookings'].post.responses['409']").exists());
         mvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
     }
 
