@@ -1,0 +1,2 @@
+2026-11-18 17:56:48.599 UTC [3119] LOG:  ending log output to stderr
+2026-11-18 17:56:48.599 UTC [3119] HINT:  Future log output will go to log destination "jsonlog".
