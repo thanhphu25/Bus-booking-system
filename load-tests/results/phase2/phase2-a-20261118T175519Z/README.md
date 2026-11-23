@@ -47,7 +47,8 @@ Plan được ghi bằng `auto_explain` trên một database riêng, 15 vòng ch
 | Chỉ lọc ngày | 15 / 15 | 8,37 | 286 |
 | Không lọc | 1 / 1 | 458,37 | 53.412 |
 
-- `searchFiltered` là một query JPQL catch-all cho mọi tổ hợp bộ lọc. SQL Hibernate sinh ra có dạng `($1=true or origin=$2) and … and ($5=true or departure_time trong ngày)`. Sau vài lần chạy, PostgreSQL chuyển sang generic plan và điều kiện trên `trips` trở thành `$5 OR (departure_time >= $6 AND departure_time < $7)`.
+- `searchFiltered` là một query JPQL catch-all cho mọi tổ hợp bộ lọc. SQL Hibernate sinh ra có dạng `($1=true or origin=$2) and … and ($5=true or departure_time trong ngày)`. Trong generic plan, điều kiện trên `trips` trở thành `$5 OR (departure_time >= $6 AND departure_time < $7)`.
+- Trace có nhiều generic plan vì notebook đã gọi `no_filter` trước các vòng trace. PostgreSQL chỉ dùng generic plan khi cost của nó (2.192) thấp hơn trung bình cost các custom plan trước đó trên cùng connection, và plan `no_filter` có cost khoảng 14.554 nên kéo trung bình lên. Lượt đo tải không gọi `no_filter`. Chạy lại cùng JAR và fixture trên PostgreSQL 16.15 local theo thứ tự của lượt đo tải cho 62/62 custom plan. Với P1, cả hai loại plan đều quét toàn bảng 667 buffer, nên số đo ở trên không đổi. Notebook đã chuyển `no_filter` xuống cuối cho các lần chạy sau.
 - Mọi bộ lọc đều dùng `Seq Scan` trên `trips`, loại 53.126 dòng để giữ 286 chuyến của ngày. Điều kiện tuyến chỉ được áp dụng sau đó, khi join với `routes`. Vì vậy bộ lọc trả 0 dòng vẫn tốn 667 buffer như bộ lọc trả 40 dòng.
 - Bảng `trips` chỉ còn khóa chính. V16 đã bỏ `idx_trips_route_id` và chưa có index nào trên `departure_time`.
 - Không lọc trả toàn bộ 53.412 chuyến, và bước sort dùng `external merge` trên đĩa vì vượt `work_mem` 4 MB.
@@ -56,7 +57,7 @@ Plan được ghi bằng `auto_explain` trên một database riêng, 15 vòng ch
 
 Đây là giả thuyết rút từ plan, chưa phải kết quả đo.
 
-- **A1:** index cho `trips` theo tuyến và giờ khởi hành. Cần kiểm tra index có được dùng trong generic plan hay không, vì điều kiện `$5 OR …` có thể ngăn PostgreSQL dùng index.
+- **A1:** index `trips (departure_time, route_id)` trong V18. Generic plan không dùng được index này vì điều kiện `$5 OR …`, nên tác dụng của nó phụ thuộc vào việc PostgreSQL giữ custom plan. Cần đo P1 và A1 trong cùng một phiên Kaggle.
 - **A2:** phân trang tại DB với thứ tự `departure_time, id` để giới hạn số dòng và byte của bộ lọc chỉ có ngày và không lọc.
 - **A3:** projection thay cho entity graph để giảm cột đọc và công việc serialize ở Java.
 
