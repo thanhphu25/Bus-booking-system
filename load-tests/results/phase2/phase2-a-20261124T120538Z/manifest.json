@@ -1,0 +1,190 @@
+{
+  "run_id": "phase2-a-20261124T120538Z",
+  "end_utc": "2026-11-24T13:54:12.657576+00:00",
+  "quick_check": false,
+  "purpose": "Phase 2A trip search read path: P1 baseline and improvement variants in one Kaggle session",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "cpu_model": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+  "cpu_logical": 4,
+  "ram_bytes": 33658159104,
+  "jdk": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-24.04.4-Ubuntu)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-24.04.4-Ubuntu, mixed mode, sharing)",
+  "java_flags": [
+    "-Xms256m",
+    "-Xmx1024m",
+    "-Duser.timezone=UTC"
+  ],
+  "hikari_max_pool": 10,
+  "python": "3.13.18",
+  "packages": {
+    "locust": "2.32.10",
+    "psutil": "6.1.1",
+    "psycopg": "3.2.4",
+    "requests": "2.32.3"
+  },
+  "postgresql": [
+    {
+      "name": "auto_explain.log_min_duration",
+      "setting": "-1",
+      "unit": "ms"
+    },
+    {
+      "name": "default_transaction_isolation",
+      "setting": "read committed",
+      "unit": null
+    },
+    {
+      "name": "effective_cache_size",
+      "setting": "524288",
+      "unit": "8kB"
+    },
+    {
+      "name": "jit",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "max_connections",
+      "setting": "100",
+      "unit": null
+    },
+    {
+      "name": "pg_stat_statements.track",
+      "setting": "top",
+      "unit": null
+    },
+    {
+      "name": "plan_cache_mode",
+      "setting": "auto",
+      "unit": null
+    },
+    {
+      "name": "random_page_cost",
+      "setting": "4",
+      "unit": null
+    },
+    {
+      "name": "server_version",
+      "setting": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "unit": null
+    },
+    {
+      "name": "shared_buffers",
+      "setting": "16384",
+      "unit": "8kB"
+    },
+    {
+      "name": "shared_preload_libraries",
+      "setting": "pg_stat_statements,auto_explain",
+      "unit": null
+    },
+    {
+      "name": "work_mem",
+      "setting": "4096",
+      "unit": "kB"
+    }
+  ],
+  "repository": "https://github.com/thanhphu25/Bus-booking-system.git",
+  "variants": {
+    "P1": {
+      "source_sha": "fd6b5f3026412d2359d70bfad681fc0773c8bcae",
+      "working_tree": "clean",
+      "jar_name": "busbooking-P1.jar",
+      "jar_sha256": "a5581858e4df6ca03b8fb95440a6b8d1a2e2ff5f4742a432e0efa7e14a7ab29f"
+    },
+    "A1": {
+      "source_sha": "6d0e02419a488eeb90cc0c2552bb4f99dc92356b",
+      "working_tree": "clean",
+      "jar_name": "busbooking-A1.jar",
+      "jar_sha256": "d146ea18067c5e6923d5182031adf2761161f73bfa03e06d42df3a6c253e8d75"
+    }
+  },
+  "settings": {
+    "user_levels": [
+      10,
+      20
+    ],
+    "wait_seconds": 0,
+    "spawn_rate": "equal to users",
+    "warmup_seconds": 60,
+    "measure_seconds": 120,
+    "repetitions": 3,
+    "trace_rounds": 15,
+    "order": "VARIANTS order on odd runs, reversed on even runs",
+    "load_filters": [
+      "zero",
+      "small_1_20",
+      "large_gt_20",
+      "date_only"
+    ]
+  },
+  "fixture": {
+    "counts": {
+      "locations": 40,
+      "bus_operators": 10,
+      "vehicles": 200,
+      "routes": 120,
+      "trips": 53412,
+      "bookings": 0
+    },
+    "departure_span": {
+      "first": "2026-10-01 05:00:00",
+      "last": "2027-03-31 22:55:00"
+    },
+    "status_counts": {
+      "CANCELLED": 2138,
+      "COMPLETED": 12691,
+      "SCHEDULED": 38583
+    },
+    "departure_times_shared_by_several_trips": 15467,
+    "total_relation_bytes": {
+      "routes": 73728,
+      "trips": 6651904,
+      "locations": 73728,
+      "bus_operators": 98304,
+      "vehicles": 90112
+    },
+    "filter_day": "2026-12-15",
+    "fixture_sha256": "55eeeaf390745ba47304d0a41397d49ed8326aafe01ea965919f63656aea8d6f",
+    "filters": {
+      "zero": {
+        "path": "/api/trips?originId=6&destinationId=13&departureDate=2026-12-15",
+        "expected_rows": 0,
+        "route_id": 6,
+        "load_tested": true
+      },
+      "small_1_20": {
+        "path": "/api/trips?originId=4&destinationId=11&departureDate=2026-12-15",
+        "expected_rows": 3,
+        "route_id": 4,
+        "load_tested": true
+      },
+      "large_gt_20": {
+        "path": "/api/trips?originId=1&destinationId=8&departureDate=2026-12-15",
+        "expected_rows": 40,
+        "route_id": 1,
+        "load_tested": true
+      },
+      "date_only": {
+        "path": "/api/trips?departureDate=2026-12-15",
+        "expected_rows": 286,
+        "route_id": null,
+        "load_tested": true
+      },
+      "no_filter": {
+        "path": "/api/trips",
+        "expected_rows": 53412,
+        "route_id": null,
+        "load_tested": false
+      }
+    }
+  },
+  "input_sha256": {
+    "locustfile.py": "20d735f66e60ffda517e1ef9dae8b8c62e3d62a64f2ad640e13cc4a39e501f70",
+    "fixture.sql": "55eeeaf390745ba47304d0a41397d49ed8326aafe01ea965919f63656aea8d6f"
+  },
+  "measurement_limitations": [
+    "Locust, Java and PostgreSQL share the Kaggle CPU",
+    "CPU model can differ across Kaggle sessions; compare variants only within one run",
+    "Plans come from a separate traced database with auto_explain enabled, not from the load runs"
+  ]
+}
