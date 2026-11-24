@@ -8,6 +8,7 @@ import com.example.busbooking.security.JwtService;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -279,7 +280,7 @@ class TripBookingIntegrationTest {
 
     @Test
     @Order(9)
-    void tripSearchPageLoadsOnlyThatPageFromTheDatabase() throws Exception {
+    void tripSearchPageReadsOnlyThatPageWithoutEntities() throws Exception {
         for (int hour = 9; hour < 14; hour++) {
             insertTrip(LocalDateTime.of(2026, 10, 25, hour, 0), 4, "SCHEDULED");
         }
@@ -288,10 +289,34 @@ class TripBookingIntegrationTest {
         try {
             statistics.clear();
             assertThat(searchIds("page", "1", "size", "2")).hasSize(2);
-            // Six trips match; applying the page in Java instead of SQL would load all of them.
-            assertThat(statistics.getEntityStatistics(TripEntity.class.getName()).getLoadCount()).isEqualTo(2);
+            // Six trips match. The query must return only the page, as plain rows instead of entities.
+            String search = Arrays.stream(statistics.getQueries())
+                    .filter(query -> query.contains("TripSearchResult")).findFirst().orElseThrow();
+            assertThat(statistics.getQueryStatistics(search).getExecutionRowCount()).isEqualTo(2);
+            assertThat(statistics.getEntityStatistics(TripEntity.class.getName()).getLoadCount()).isZero();
         } finally {
             statistics.setStatisticsEnabled(false);
+        }
+    }
+
+    @Test
+    @Order(10)
+    void tripSearchReturnsTheSameTripJsonAsTripDetails() throws Exception {
+        insertTrip(LocalDateTime.of(2026, 10, 25, 23, 0), 3, "CANCELLED");
+        String body = mvc.perform(get("/api/trips")
+                        .param("originId", originId.toString())
+                        .param("destinationId", destinationId.toString())
+                        .param("departureDate", "2026-10-25"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode trips = json.readTree(body);
+        assertThat(trips.size()).isEqualTo(2);
+        for (JsonNode trip : trips) {
+            String detail = mvc.perform(get("/api/trips/" + trip.get("id").asLong()))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            // Search reads a projection and details read entities; both must give the same JSON.
+            assertThat(json.readTree(detail)).isEqualTo(trip);
         }
     }
 

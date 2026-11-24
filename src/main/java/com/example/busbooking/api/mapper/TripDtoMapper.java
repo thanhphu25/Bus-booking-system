@@ -1,6 +1,7 @@
 package com.example.busbooking.api.mapper;
 
 import com.example.busbooking.api.dto.trip.TripResponse;
+import com.example.busbooking.business.result.TripSearchResult;
 import com.example.busbooking.domain.model.Trip;
 import com.example.busbooking.domain.model.RouteSummary;
 import com.example.busbooking.domain.model.VehicleSummary;
@@ -29,6 +30,25 @@ public class TripDtoMapper {
                 trip.getPrice(),
                 trip.getAvailableSeats(),
                 trip.getStatus()
+        );
+    }
+
+    public TripResponse toResponse(TripSearchResult trip) {
+        return new TripResponse(
+                trip.id(),
+                trip.routeId(),
+                trip.vehicleId(),
+                new TripResponse.RouteDetails(trip.origin(), trip.destination(), trip.estimatedDurationMinutes()),
+                new TripResponse.VehicleDetails(trip.vehicleType(), trip.seatCapacity(), trip.operatorName()),
+                trip.origin(),
+                trip.destination(),
+                trip.vehicleType(),
+                trip.operatorName(),
+                trip.departureTime(),
+                trip.arrivalTime(),
+                trip.price(),
+                trip.availableSeats(),
+                trip.status()
         );
     }
 

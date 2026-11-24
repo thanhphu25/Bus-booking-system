@@ -1,6 +1,7 @@
 
 package com.example.busbooking.data.repository;
 
+import com.example.busbooking.business.result.TripSearchResult;
 import com.example.busbooking.data.entity.TripEntity;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +35,7 @@ public interface SpringDataTripRepository
                                   boolean skipRoute, boolean skipStatus, boolean skipDate);
 
     // Giữ nguyên API mà RepositoryAdapter đang sử dụng
-    default List<TripEntity> search(
+    default List<TripSearchResult> search(
             Long originId,
             Long destinationId,
             LocalDateTime departureDate,
@@ -59,16 +60,20 @@ public interface SpringDataTripRepository
         );
     }
 
+    // Selects only the response columns, so no entities are built or tracked for a search.
     @Query("""
-        SELECT t
+        SELECT new com.example.busbooking.business.result.TripSearchResult(
+            t.id, t.routeId, t.vehicleId, o.name, d.name, r.estimatedDurationMinutes,
+            v.vehicleType, v.seatCapacity, op.name,
+            t.departureTime, t.arrivalTime, t.price, t.availableSeats, t.status)
         FROM TripEntity t
-        JOIN FETCH t.route r
-        JOIN FETCH r.origin
-        JOIN FETCH r.destination
-        JOIN FETCH t.vehicle v
-        JOIN FETCH v.operator
-        WHERE (:skipOrigin = true OR r.origin.id = :originId)
-          AND (:skipDestination = true OR r.destination.id = :destinationId)
+        JOIN t.route r
+        JOIN r.origin o
+        JOIN r.destination d
+        JOIN t.vehicle v
+        JOIN v.operator op
+        WHERE (:skipOrigin = true OR o.id = :originId)
+          AND (:skipDestination = true OR d.id = :destinationId)
           AND (
               :skipDate = true
               OR (
@@ -78,7 +83,7 @@ public interface SpringDataTripRepository
           )
         ORDER BY t.departureTime ASC, t.id ASC
         """)
-    List<TripEntity> searchFiltered(
+    List<TripSearchResult> searchFiltered(
             @Param("originId") Long originId,
             @Param("destinationId") Long destinationId,
             @Param("departureDate") LocalDateTime departureDate,

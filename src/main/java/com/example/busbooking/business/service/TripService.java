@@ -111,36 +111,6 @@ public class TripService {
         return vehicle;
     }
 
-    public List<Trip> searchTrips(
-            Long originId,
-            Long destinationId,
-            LocalDate departureDate) {
-
-        return tripRepository.search(
-                originId,
-                destinationId,
-                departureDate
-        );
-    }
-
-    // Without page and size the search returns every match, as in Phase 1.
-    public List<Trip> searchTrips(
-            Long originId,
-            Long destinationId,
-            LocalDate departureDate,
-            Integer page,
-            Integer size) {
-
-        if (page == null && size == null) {
-            return searchTrips(originId, destinationId, departureDate);
-        }
-        int pageNumber = page == null ? 0 : page;
-        int pageSize = size == null ? 20 : size;
-        if (pageNumber < 0) throw new BusinessException("page must not be negative");
-        if (pageSize < 1 || pageSize > 100) throw new BusinessException("size must be between 1 and 100");
-        return tripRepository.search(originId, destinationId, departureDate, pageNumber, pageSize);
-    }
-
     public Trip getTripById(Long tripId) {
         return tripRepository.findById(tripId)
                 .orElseThrow(() ->

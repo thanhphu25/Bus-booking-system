@@ -2,6 +2,7 @@ package com.example.busbooking.api.controller;
 
 import com.example.busbooking.api.dto.trip.TripResponse;
 import com.example.busbooking.api.mapper.TripDtoMapper;
+import com.example.busbooking.business.service.TripSearchService;
 import com.example.busbooking.business.service.TripService;
 import com.example.busbooking.domain.model.Trip;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,12 +17,15 @@ import java.util.List;
 public class TripController {
 
     private final TripService tripService;
+    private final TripSearchService tripSearchService;
     private final TripDtoMapper tripDtoMapper;
 
     public TripController(
             TripService tripService,
+            TripSearchService tripSearchService,
             TripDtoMapper tripDtoMapper) {
         this.tripService = tripService;
+        this.tripSearchService = tripSearchService;
         this.tripDtoMapper = tripDtoMapper;
     }
 
@@ -35,8 +39,8 @@ public class TripController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
 
-        List<TripResponse> responses = tripService
-                .searchTrips(originId, destinationId, departureDate, page, size)
+        List<TripResponse> responses = tripSearchService
+                .search(originId, destinationId, departureDate, page, size)
                 .stream()
                 .map(tripDtoMapper::toResponse)
                 .toList();
