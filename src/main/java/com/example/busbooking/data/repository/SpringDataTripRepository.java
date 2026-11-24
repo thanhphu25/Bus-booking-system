@@ -3,6 +3,7 @@ package com.example.busbooking.data.repository;
 
 import com.example.busbooking.data.entity.TripEntity;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -37,7 +38,8 @@ public interface SpringDataTripRepository
             Long originId,
             Long destinationId,
             LocalDateTime departureDate,
-            LocalDateTime departureDateEnd
+            LocalDateTime departureDateEnd,
+            Pageable pageable
     ) {
         if ((departureDate == null) != (departureDateEnd == null)) {
             throw new IllegalArgumentException(
@@ -52,7 +54,8 @@ public interface SpringDataTripRepository
                 departureDateEnd,
                 originId == null,
                 destinationId == null,
-                departureDate == null
+                departureDate == null,
+                pageable
         );
     }
 
@@ -73,7 +76,7 @@ public interface SpringDataTripRepository
                   AND t.departureTime < :departureDateEnd
               )
           )
-        ORDER BY t.departureTime ASC
+        ORDER BY t.departureTime ASC, t.id ASC
         """)
     List<TripEntity> searchFiltered(
             @Param("originId") Long originId,
@@ -82,7 +85,8 @@ public interface SpringDataTripRepository
             @Param("departureDateEnd") LocalDateTime departureDateEnd,
             @Param("skipOrigin") boolean skipOrigin,
             @Param("skipDestination") boolean skipDestination,
-            @Param("skipDate") boolean skipDate
+            @Param("skipDate") boolean skipDate,
+            Pageable pageable
     );
 
     @Query("""

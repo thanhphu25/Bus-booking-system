@@ -31,10 +31,12 @@ public class TripController {
             @RequestParam(required = false) Long destinationId,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate departureDate) {
+            LocalDate departureDate,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
         List<TripResponse> responses = tripService
-                .searchTrips(originId, destinationId, departureDate)
+                .searchTrips(originId, destinationId, departureDate, page, size)
                 .stream()
                 .map(tripDtoMapper::toResponse)
                 .toList();

@@ -3,7 +3,11 @@ package com.example.busbooking.integration;
 import com.example.busbooking.api.dto.booking.BookingResponse;
 import com.example.busbooking.api.dto.trip.TripResponse;
 import com.example.busbooking.business.service.BookingService;
+import com.example.busbooking.data.entity.TripEntity;
 import com.example.busbooking.security.JwtService;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +22,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -39,6 +45,7 @@ class TripBookingIntegrationTest {
     @Autowired JwtService jwt;
     @Autowired BookingService bookingService;
     @Autowired ObjectMapper json;
+    @Autowired EntityManagerFactory entityManagerFactory;
 
     private final String fixture = "it_" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
     private Long userId;
@@ -223,6 +230,81 @@ class TripBookingIntegrationTest {
                 .isEqualTo(4);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM bookings WHERE trip_id = ?", Long.class, tripId))
                 .isZero();
+    }
+
+    @Test
+    @Order(7)
+    void tripSearchPagesFollowDepartureThenIdOrder() throws Exception {
+        Long tie = insertTrip(LocalDateTime.of(2026, 10, 25, 10, 0), 4, "SCHEDULED");
+        Long laterTie = insertTrip(LocalDateTime.of(2026, 10, 25, 9, 0), 4, "SCHEDULED");
+        // Moving the older trip onto the same time stores its new row version after the newer trip.
+        jdbc.update("UPDATE trips SET departure_time = ?, arrival_time = ? WHERE id = ?",
+                LocalDateTime.of(2026, 10, 25, 9, 0), LocalDateTime.of(2026, 10, 25, 11, 0), tie);
+        Long early = insertTrip(LocalDateTime.of(2026, 10, 25, 6, 30), 4, "SCHEDULED");
+        Long late = insertTrip(LocalDateTime.of(2026, 10, 25, 21, 0), 4, "SCHEDULED");
+        List<Long> all = List.of(early, tripId, tie, laterTie, late);
+
+        assertThat(searchIds()).isEqualTo(all);
+        assertThat(searchIds("page", "0", "size", "2")).isEqualTo(all.subList(0, 2));
+        assertThat(searchIds("page", "1", "size", "2")).isEqualTo(all.subList(2, 4));
+        assertThat(searchIds("page", "2", "size", "2")).isEqualTo(all.subList(4, 5));
+        assertThat(searchIds("page", "3", "size", "2")).isEmpty();
+        assertThat(searchIds("size", "2")).isEqualTo(all.subList(0, 2));
+        assertThat(searchIds("page", "0")).isEqualTo(all);
+        assertThat(searchIds("page", "1")).isEmpty();
+        assertThat(searchIds("page", String.valueOf(Integer.MAX_VALUE), "size", "100")).isEmpty();
+    }
+
+    @Test
+    @Order(8)
+    void tripSearchRejectsInvalidPageAndSize() throws Exception {
+        mvc.perform(get("/api/trips").param("page", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("BUSINESS_ERROR"));
+        mvc.perform(get("/api/trips").param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("BUSINESS_ERROR"));
+        mvc.perform(get("/api/trips").param("page", "0").param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("BUSINESS_ERROR"));
+        mvc.perform(get("/api/trips").param("page", "first"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("INVALID_REQUEST"));
+        mvc.perform(get("/api/trips").param("page", "99999999999"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("INVALID_REQUEST"));
+        mvc.perform(get("/api/trips").param("size", "100"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Order(9)
+    void tripSearchPageLoadsOnlyThatPageFromTheDatabase() throws Exception {
+        for (int hour = 9; hour < 14; hour++) {
+            insertTrip(LocalDateTime.of(2026, 10, 25, hour, 0), 4, "SCHEDULED");
+        }
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+        try {
+            statistics.clear();
+            assertThat(searchIds("page", "1", "size", "2")).hasSize(2);
+            // Six trips match; applying the page in Java instead of SQL would load all of them.
+            assertThat(statistics.getEntityStatistics(TripEntity.class.getName()).getLoadCount()).isEqualTo(2);
+        } finally {
+            statistics.setStatisticsEnabled(false);
+        }
+    }
+
+    private List<Long> searchIds(String... paging) throws Exception {
+        var request = get("/api/trips")
+                .param("originId", originId.toString())
+                .param("destinationId", destinationId.toString())
+                .param("departureDate", "2026-10-25");
+        for (int i = 0; i < paging.length; i += 2) {
+            request.param(paging[i], paging[i + 1]);
+        }
+        String body = mvc.perform(request).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        return Arrays.stream(json.readValue(body, TripResponse[].class)).map(TripResponse::id).toList();
     }
 
     private Long roleId(String name) {

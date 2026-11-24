@@ -119,13 +119,19 @@ Content-Type: application/json
 | API | Bộ lọc / tham số | Ý nghĩa |
 |---|---|---|
 | `GET /api/locations` | `q` (tùy chọn) | Danh sách Location để lấy ID và tìm chuyến |
-| `GET /api/trips` | `originId`, `destinationId`, `departureDate` | Tìm kiếm các chuyến xe; ngày có dạng `YYYY-MM-DD` |
+| `GET /api/trips` | `originId`, `destinationId`, `departureDate`, `page`, `size` | Tìm kiếm các chuyến xe; ngày có dạng `YYYY-MM-DD`; kết quả sắp theo giờ khởi hành rồi `id` |
 | `GET /api/trips/{tripId}` | `tripId` | Chi tiết một chuyến xe |
 
 Ví dụ:
 
 ```http
 GET /api/trips?originId=1&destinationId=2&departureDate=2026-11-10
+```
+
+Không gửi `page` và `size` thì API trả toàn bộ chuyến khớp như trước. Gửi ít nhất một trong hai thì phần thiếu lấy mặc định `page=0`, `size=20`; `page` phải từ 0 và `size` từ 1 đến 100, sai thì trả 400. Response vẫn là mảng `TripResponse`, không kèm tổng số dòng:
+
+```http
+GET /api/trips?departureDate=2026-11-10&page=0&size=20
 ```
 
 Dữ liệu trả về có thể chứa điểm đi/đến, thời điểm khởi hành, giá, ghế còn lại, phương tiện, nhà xe và trạng thái; **tên trường và cấu trúc lồng nhau theo `TripResponse` thực tế trong OpenAPI**. Tài liệu cũ có các ví dụ `TripResponse` không đồng nhất giữa list/detail, nên không coi các ví dụ đó là schema chính thức.

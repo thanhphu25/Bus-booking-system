@@ -17,6 +17,14 @@ public interface TripRepository {
             LocalDate departureDate
     );
 
+    List<Trip> search(
+            Long originId,
+            Long destinationId,
+            LocalDate departureDate,
+            int page,
+            int size
+    );
+
     Optional<Trip> findById(Long tripId);
 
     Optional<Trip> findByIdForUpdate(Long tripId);
