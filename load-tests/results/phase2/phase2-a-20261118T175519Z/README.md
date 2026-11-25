@@ -58,8 +58,8 @@ Plan được ghi bằng `auto_explain` trên một database riêng, 15 vòng ch
 Đây là giả thuyết rút từ plan, chưa phải kết quả đo.
 
 - **A1:** index `trips (departure_time, route_id)` trong V18. Generic plan không dùng được index này vì điều kiện `$5 OR …`, nên tác dụng của nó phụ thuộc vào việc PostgreSQL giữ custom plan. Đã đo cùng phiên với P1: [phase2-a-20261124T120538Z](../phase2-a-20261124T120538Z/README.md).
-- **A2:** phân trang tại DB với thứ tự `departure_time, id` để giới hạn số dòng và byte của bộ lọc chỉ có ngày và không lọc.
-- **A3:** projection thay cho entity graph để giảm cột đọc và công việc serialize ở Java.
+- **A2:** phân trang tại DB với thứ tự `departure_time, id` để giới hạn số dòng và byte của bộ lọc chỉ có ngày và không lọc. Đã đo cùng P1: [phase2-a-20261124T190521Z](../phase2-a-20261124T190521Z/README.md).
+- **A3:** projection thay cho entity graph để giảm cột đọc và công việc serialize ở Java. Đã đo cùng P1: [phase2-a-20261124T190521Z](../phase2-a-20261124T190521Z/README.md).
 
 ## Giới hạn
 

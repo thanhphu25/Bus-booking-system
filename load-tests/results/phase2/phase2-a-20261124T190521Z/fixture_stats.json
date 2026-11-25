@@ -1,0 +1,159 @@
+{
+  "counts": {
+    "locations": 40,
+    "bus_operators": 10,
+    "vehicles": 200,
+    "routes": 120,
+    "trips": 53412,
+    "bookings": 0
+  },
+  "departure_span": {
+    "first": "2026-10-01 05:00:00",
+    "last": "2027-03-31 22:55:00"
+  },
+  "status_counts": {
+    "CANCELLED": 2138,
+    "COMPLETED": 12691,
+    "SCHEDULED": 38583
+  },
+  "departure_times_shared_by_several_trips": 15467,
+  "total_relation_bytes": {
+    "routes": 73728,
+    "trips": 6651904,
+    "locations": 73728,
+    "bus_operators": 98304,
+    "vehicles": 90112
+  },
+  "filter_day": "2026-12-15",
+  "fixture_sha256": "55eeeaf390745ba47304d0a41397d49ed8326aafe01ea965919f63656aea8d6f",
+  "page_size": 20,
+  "filters": {
+    "zero": {
+      "path": "/api/trips?originId=6&destinationId=13&departureDate=2026-12-15",
+      "expected_rows": 0,
+      "route_id": 6,
+      "load_tested": true,
+      "paged_variants_only": false,
+      "first_page_ids": null
+    },
+    "small_1_20": {
+      "path": "/api/trips?originId=4&destinationId=11&departureDate=2026-12-15",
+      "expected_rows": 3,
+      "route_id": 4,
+      "load_tested": true,
+      "paged_variants_only": false,
+      "first_page_ids": null
+    },
+    "large_gt_20": {
+      "path": "/api/trips?originId=1&destinationId=8&departureDate=2026-12-15",
+      "expected_rows": 40,
+      "route_id": 1,
+      "load_tested": true,
+      "paged_variants_only": false,
+      "first_page_ids": null
+    },
+    "date_only": {
+      "path": "/api/trips?departureDate=2026-12-15",
+      "expected_rows": 286,
+      "route_id": null,
+      "load_tested": true,
+      "paged_variants_only": false,
+      "first_page_ids": null
+    },
+    "no_filter": {
+      "path": "/api/trips",
+      "expected_rows": 53412,
+      "route_id": null,
+      "load_tested": false,
+      "paged_variants_only": false,
+      "first_page_ids": null
+    },
+    "large_gt_20_page0": {
+      "path": "/api/trips?originId=1&destinationId=8&departureDate=2026-12-15&page=0&size=20",
+      "expected_rows": 20,
+      "route_id": 1,
+      "load_tested": true,
+      "paged_variants_only": true,
+      "first_page_ids": [
+        22069,
+        22075,
+        22081,
+        22087,
+        22093,
+        22099,
+        22064,
+        22070,
+        22076,
+        22082,
+        22088,
+        22094,
+        22100,
+        22065,
+        22071,
+        22077,
+        22083,
+        22089,
+        22095,
+        22101
+      ]
+    },
+    "date_only_page0": {
+      "path": "/api/trips?departureDate=2026-12-15&page=0&size=20",
+      "expected_rows": 20,
+      "route_id": null,
+      "load_tested": true,
+      "paged_variants_only": true,
+      "first_page_ids": [
+        22069,
+        22172,
+        22114,
+        22257,
+        22180,
+        22269,
+        22285,
+        22349,
+        22075,
+        22178,
+        22120,
+        22143,
+        22184,
+        22217,
+        22300,
+        22241,
+        22264,
+        22081,
+        22126,
+        22149
+      ]
+    },
+    "no_filter_page0": {
+      "path": "/api/trips?page=0&size=20",
+      "expected_rows": 20,
+      "route_id": null,
+      "load_tested": false,
+      "paged_variants_only": true,
+      "first_page_ids": [
+        116,
+        155,
+        271,
+        285,
+        13,
+        52,
+        223,
+        273,
+        127,
+        259,
+        122,
+        144,
+        87,
+        188,
+        19,
+        58,
+        126,
+        198,
+        93,
+        138
+      ]
+    }
+  }
+}
