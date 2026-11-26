@@ -1,0 +1,9 @@
+queryid,group,kind,tables,calls,exec_ms,rows,query
+6650430479887907887,other,begin,,4000,3.0201169999999973,0,BEGIN
+1637407606667381779,other,begin,,4000,37.068134000000015,0,BEGIN READ ONLY
+2933532422378517030,other,show,,4000,20.896462999999983,0,SHOW TRANSACTION ISOLATION LEVEL
+-7968894794618983137,booking_insert,insert,bookings,4000,667.0287289999999,4000,"insert into bookings (booked_at,booking_code,passenger_name,passenger_phone,quantity,status,total_amount,trip_id,unit_price,user_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+RETURNING *"
+-1707276825770153707,trip_lock_select,select,trips,4000,127808.64826300013,4000,"select te1_0.id,te1_0.arrival_time,te1_0.available_seats,te1_0.created_at,te1_0.departure_time,te1_0.price,te1_0.route_id,te1_0.status,te1_0.vehicle_id from trips te1_0 where te1_0.id=$1 for no key update of te1_0"
+-2239565178738179313,auth,select,roles users,4000,103.00356199999992,4000,"select ue1_0.id,ue1_0.created_at,ue1_0.email,ue1_0.email_verified,ue1_0.full_name,ue1_0.password,ue1_0.phone,ue1_0.role_id,r1_0.id,r1_0.name,ue1_0.status,ue1_0.updated_at from users ue1_0 join roles r1_0 on r1_0.id=ue1_0.role_id where ue1_0.id=$1"
+-5460688591558525474,trip_seat_update,update,trips,4000,380.80934900000096,4000,update trips te1_0 set available_seats=(te1_0.available_seats+$1) where te1_0.id=$2 and (te1_0.available_seats+$3)>=$4

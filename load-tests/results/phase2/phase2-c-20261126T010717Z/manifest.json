@@ -1,0 +1,124 @@
+{
+  "start_utc": "2026-11-26T01:07:18.108549+00:00",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "cpu_model": "AMD EPYC 7B12",
+  "cpu_logical": 4,
+  "ram_bytes": 33658159104,
+  "jdk": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-24.04.4-Ubuntu)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-24.04.4-Ubuntu, mixed mode, sharing)",
+  "java_flags": [
+    "-Xms256m",
+    "-Xmx1024m",
+    "-Duser.timezone=UTC"
+  ],
+  "hikari_max_pool": 10,
+  "python": "3.13.18",
+  "packages": {
+    "locust": "2.32.10",
+    "psutil": "6.1.1",
+    "psycopg": "3.2.4",
+    "requests": "2.32.3"
+  },
+  "settings": {
+    "seed": 20261126,
+    "users": [
+      10,
+      20
+    ],
+    "workloads": [
+      "legacy-distributed",
+      "distributed",
+      "concentrated"
+    ],
+    "max_in_flight": "equals users",
+    "wait_seconds": 0,
+    "repetitions": 3,
+    "idempotency_key": "not sent",
+    "fixture": {
+      "legacy": [
+        1000,
+        4
+      ],
+      "main": [
+        100,
+        40
+      ],
+      "warmup": [
+        10,
+        10
+      ]
+    }
+  },
+  "source": {
+    "P1": {
+      "source_sha": "fd6b5f3026412d2359d70bfad681fc0773c8bcae",
+      "jar_name": "busbooking-p1.jar",
+      "jar_sha256": "35d296bbc6be0e4ab55ac842cedc053e5d955067aa3537e4cd1381955944ccbd"
+    },
+    "C": {
+      "source_sha": "a6c81eccb1b2c9ff12ddf66a397dd2f9e164c7c9",
+      "jar_name": "busbooking-c.jar",
+      "jar_sha256": "b70ff6110d99bffff7d6ebe7e7b9996492ce93dd44a20de52d1e6e715b6e8846"
+    }
+  },
+  "note": "The C JAR also contains Phase 2B; without Idempotency-Key it runs the same create use case as P1 except for the Phase 2C trip snapshot.",
+  "input_sha256": {
+    "benchmark.py": "616729342607f6eaa2e8258ea58e2d0d6965eeb322c0f96e679a61676895eba3",
+    "locustfile.py": "4897528119de902ccd26c09fca305cc9806ee2056ba992de6b204f282f525b73",
+    "fixture.sql": "9a5e819337e3200201bf97fe5910b5ca0b00f52715c211fd1ccf493d07834cce"
+  },
+  "postgresql": [
+    {
+      "name": "default_transaction_isolation",
+      "setting": "read committed",
+      "unit": null
+    },
+    {
+      "name": "lock_timeout",
+      "setting": "0",
+      "unit": "ms"
+    },
+    {
+      "name": "max_connections",
+      "setting": "100",
+      "unit": null
+    },
+    {
+      "name": "pg_stat_statements.track",
+      "setting": "top",
+      "unit": null
+    },
+    {
+      "name": "server_version",
+      "setting": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "unit": null
+    },
+    {
+      "name": "shared_buffers",
+      "setting": "16384",
+      "unit": "8kB"
+    },
+    {
+      "name": "shared_preload_libraries",
+      "setting": "pg_stat_statements",
+      "unit": null
+    },
+    {
+      "name": "statement_timeout",
+      "setting": "0",
+      "unit": "ms"
+    },
+    {
+      "name": "synchronous_commit",
+      "setting": "on",
+      "unit": null
+    }
+  ],
+  "intent_sha256": {
+    "legacy-distributed": "27b8c6f27308544c2151eaff14e3b26f4b057aa9c255896c9267cf0b4b9275d2",
+    "distributed": "6aaa490294ecd2085615cd18cadb6354869f0c44abcc9a5994530422e4f51c2a",
+    "concentrated": "9a4849be9d55f19472915a88ba062054414a63c7ed91eaecea76d197ca631c5c",
+    "warmup": "002815b2064be1c200b23375ba5f300f1b16e553f2123b14e7207c4e14cc264d"
+  },
+  "end_utc": "2026-11-26T01:24:18.360445+00:00",
+  "completed_trials": 36
+}

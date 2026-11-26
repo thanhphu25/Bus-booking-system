@@ -1,0 +1,97 @@
+{
+  "variant": "P1",
+  "workload": "concentrated",
+  "users": 10,
+  "started_at_utc": "2026-11-26T01:20:34.992121+00:00",
+  "ended_at_utc": "2026-11-26T01:20:56.388123+00:00",
+  "seconds": 19.368712907,
+  "requests": 4000,
+  "successful_requests": 4000,
+  "errors": {},
+  "http_statuses": {
+    "201": 4000
+  },
+  "successful_rps": 206.51862719047116,
+  "p50_ms": 22.560392,
+  "p95_ms": 165.674247,
+  "response_bytes": 978665,
+  "sql": {
+    "sql_calls": 44000,
+    "booking_sql_per_booking": 10.0,
+    "booking_select_per_booking": 6.0,
+    "relation_select_per_booking": 5.0,
+    "auth_sql_per_booking": 1.0,
+    "booking_sql_exec_ms": 150762.86584500034,
+    "groups": {
+      "auth": {
+        "calls": 4000,
+        "exec_ms": 103.28518900000012
+      },
+      "booking_insert": {
+        "calls": 4000,
+        "exec_ms": 636.7879219999993
+      },
+      "other": {
+        "calls": 8000,
+        "exec_ms": 41.43912699999999
+      },
+      "relation_select": {
+        "calls": 20000,
+        "exec_ms": 226.48522399999962
+      },
+      "trip_lock_select": {
+        "calls": 4000,
+        "exec_ms": 149478.14895600034
+      },
+      "trip_seat_update": {
+        "calls": 4000,
+        "exec_ms": 380.004616000001
+      }
+    },
+    "select_calls_by_table": {
+      "bus_operators": 4000,
+      "locations": 8000,
+      "routes": 4000,
+      "trips": 4000,
+      "vehicles": 4000
+    }
+  },
+  "resources": {
+    "java": {
+      "samples": 94,
+      "sampled_seconds": 19.128053151,
+      "cpu_seconds_sampled": 44.46000000000001,
+      "peak_rss_mib": 576.671875
+    },
+    "postgresql": {
+      "samples": 94,
+      "sampled_seconds": 19.128053151,
+      "cpu_seconds_sampled": 6.55,
+      "peak_rss_mib": 446.15234375
+    },
+    "locust": {
+      "samples": 94,
+      "sampled_seconds": 19.128053151,
+      "cpu_seconds_sampled": 3.25,
+      "peak_rss_mib": 63.921875
+    }
+  },
+  "java_cpu_s_per_booking": 0.011115000000000002,
+  "postgresql_cpu_s_per_booking": 0.0016374999999999998,
+  "locks": {
+    "samples": 94,
+    "mean_active": 8.574468085106384,
+    "mean_lock_waiting": 7.851063829787234,
+    "fraction_samples_with_lock_wait": 1.0
+  },
+  "intents": 4000,
+  "bookings": 4000,
+  "seats_deducted": 4000,
+  "unbalanced_trips": 0,
+  "intent_mismatches": 0,
+  "body_keys": [
+    "bookedAt,bookingCode,id,passengerName,passengerPhone,quantity,status,totalAmount,tripId,unitPrice"
+  ],
+  "outcome_sha256": "6b140b4ee2e390ac3fca6ec214e9b6c6dae1de5604d7fd503350761edc9e40c9",
+  "checked": true
+}
