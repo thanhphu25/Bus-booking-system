@@ -135,6 +135,8 @@ Luồng hiện tại có thể đối chiếu tại [BookingService](../src/main
 - Chỉ chuyển **luồng tạo booking** sang port mới. Hủy booking vẫn cần sức chứa xe để hoàn ghế; quản trị Trip cũng cần dữ liệu riêng. Không thay mapper chung thành bản thiếu thông tin làm hỏng các use case đó.
 - Không đồng thời đổi index, pool, JWT lookup, batching hay chính sách nghiệp vụ trong cặp P1/C. Sau tích hợp, khối tạo mới của B sử dụng đường ghi của C; replay của B không đi qua đường đó.
 
+**Trạng thái triển khai (nhánh `feature/booking-trip-snapshot`):** đã thêm `TripBookingRepository`, `BookingTripSnapshot`, `TripBookingRepositoryAdapter` và chuyển `BookingService.create` sang port mới; cancel/quản trị giữ `TripRepository`. Trace Hibernate trong `BookingCreateSqlIntegrationTest`: đường khóa chi tiết của P1 phát sinh 1 SELECT khóa `trips` + 5 SELECT quan hệ (`routes`, `locations` ×2, `vehicles`, `bus_operators`); đường create của C chỉ còn 1 SELECT khóa `trips`, 1 UPDATE `trips`, 1 INSERT `bookings`. Đây là trace trên DB test local, chưa phải số đo hiệu năng; số Kaggle điền sau khi chạy 5.3.
+
 ### 5.3. Kịch bản trước/sau trên Kaggle
 
 1. **Trace nhỏ để xác định nguyên nhân:** cùng fixture sạch, gọi một số booking riêng biệt, lưu SQL theo transaction. Phân loại SQL xác thực user/role với SQL tạo booking. Xác nhận truy vấn vào `routes`, `locations`, `vehicles`, `bus_operators` phát sinh từ mapper; C phải loại bỏ chúng khỏi khối create. Không tính số gọi adapter là số câu SQL.

@@ -199,7 +199,36 @@ sequenceDiagram
     API-->>Client: JSON + HTTP status
 ```
 
-`BookingService.create/cancel` và `TripService.create/update/cancel` có `@Transactional`. Tạo Booking khóa Trip bằng `PESSIMISTIC_WRITE`, giảm ghế bằng update có điều kiện không âm rồi lưu Booking; lỗi lưu được rollback cùng giao dịch. Hủy Booking khóa Booking rồi Trip, kiểm tra capacity, hoàn ghế rồi đổi trạng thái. Transaction OTP và đổi role nằm tại adapter JDBC; SMTP được gọi sau khi tài khoản/challenge đã commit. Có integration test cho ghế cuối và rollback; trạng thái pass hiện tại chưa xác minh.
+`BookingService.create/cancel` và `TripService.create/update/cancel` có `@Transactional`. Tạo Booking khóa Trip bằng `PESSIMISTIC_WRITE`, giảm ghế bằng update có điều kiện không âm rồi lưu Booking; lỗi lưu được rollback cùng giao dịch. Từ Pha 2C, bước khóa của luồng tạo dùng port riêng `TripBookingRepository` (xem mục dưới). Hủy Booking khóa Booking rồi Trip, kiểm tra capacity, hoàn ghế rồi đổi trạng thái. Transaction OTP và đổi role nằm tại adapter JDBC; SMTP được gọi sau khi tài khoản/challenge đã commit. Có integration test cho ghế cuối và rollback; trạng thái pass hiện tại chưa xác minh.
+
+### Pha 2C: dữ liệu Trip dùng khi tạo booking
+
+Pha 1 tạo booking qua `TripRepository.findByIdForUpdate`: khóa dòng `trips` rồi `TripPersistenceMapper` truy cập các quan hệ lazy để dựng `Trip` chi tiết, phát sinh thêm SELECT vào `routes`, `locations` (2 lần), `vehicles`, `bus_operators` **trong lúc đang giữ khóa**, dù `create` chỉ cần ID, trạng thái, giá và ghế trống.
+
+Pha 2C tách port ghi riêng cho use case này:
+
+```mermaid
+flowchart LR
+    BS["BookingService.create"] --> P["TripBookingRepository<br/>lockForBooking / reserveSeats"]
+    P -.->|implements| A["TripBookingRepositoryAdapter"]
+    A --> Q["SpringDataTripRepository.findByIdForUpdate<br/>SELECT trips ... FOR UPDATE"]
+    A --> S["BookingTripSnapshot(id, status, price, availableSeats)"]
+    BC["BookingService.cancel / TripService"] --> TR["TripRepository.findByIdForUpdate<br/>+ TripPersistenceMapper"]
+```
+
+| Khía cạnh | Pha 1 | Pha 2C |
+|---|---|---|
+| SQL trong transaction tạo booking (Hibernate) | 1 SELECT khóa `trips` + 5 SELECT quan hệ, UPDATE `trips`, INSERT `bookings` | 1 SELECT khóa `trips`, UPDATE `trips`, INSERT `bookings` |
+| Kiểu dữ liệu business nhận | `Trip` chi tiết (kèm `RouteSummary`, `VehicleSummary`) | `BookingTripSnapshot` chỉ gồm scalar |
+| Khóa | `PESSIMISTIC_WRITE` trên dòng Trip tới commit | Giữ nguyên: cùng câu khóa root Trip, cùng transaction khóa → kiểm tra → giảm ghế → lưu booking → commit |
+
+Quyết định và đánh đổi:
+
+- Adapter dùng lại đúng truy vấn khóa root của Pha 1 và chỉ đọc cột scalar của entity, nên các quan hệ lazy không được khởi tạo. Cặp đo P1/C vì vậy chỉ khác phần đọc quan hệ, không đổi câu khóa hay index.
+- Snapshot chỉ hợp lệ trong transaction hiện tại, không cache, không dùng lại cho booking khác. Business vẫn tự kiểm tra trạng thái, đủ ghế và tính giá.
+- Chỉ luồng tạo chuyển sang port mới. Hủy booking cần `seatCapacity` của xe để hoàn ghế và quản trị Trip cần dữ liệu chi tiết, nên vẫn dùng `TripRepository` và mapper cũ.
+- Với idempotency của Pha 2B, chỉ request giành được key mới đi vào khối tạo này; request replay không khóa Trip.
+- Số SQL giảm là kết quả trace (`BookingCreateSqlIntegrationTest`). Tác động lên p95/RPS/CPU và chờ khóa phải lấy từ bài đo Kaggle phân tán/tập trung, chưa kết luận tại đây.
 
 ### Đăng ký và xác thực email
 

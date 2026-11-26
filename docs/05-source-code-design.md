@@ -112,7 +112,7 @@ Các service hiện diện trong cây source:
 
 | Nhóm port | Interface tiêu biểu | Adapter/hạ tầng liên quan |
 |---|---|---|
-| Repository | `BookingRepository`, `TripRepository`, `UserRepository`, `OperatorRepository`, `EmailVerificationRepository`, `RoleManagementRepository` | Các lớp tại `data/adapter/` |
+| Repository | `BookingRepository`, `TripRepository`, `TripBookingRepository` (Pha 2C, đường ghi tạo booking), `UserRepository`, `OperatorRepository`, `EmailVerificationRepository`, `RoleManagementRepository` | Các lớp tại `data/adapter/` |
 | Security | `PasswordHasher`, `TokenProvider`, `VerificationCodeProvider` | `BCryptPasswordHasher`, `JwtService`, `HmacVerificationCodeProvider` |
 | Notification | `EmailVerificationSender` | `SmtpEmailVerificationSender` |
 
@@ -134,7 +134,7 @@ Tầng dữ liệu tách bốn nhiệm vụ:
 |---|---|---|
 | `data/entity` | Ánh xạ bảng PostgreSQL qua JPA | `BookingEntity`, `TripEntity`, `OperatorEntity`, `UserEntity` |
 | `data/repository` | Interface truy cập JPA | `SpringDataBookingRepository`, `SpringDataTripRepository` |
-| `data/adapter` | Hiện thực business repository port bằng JPA hoặc JDBC | `BookingRepositoryAdapter`, `TripRepositoryAdapter`, `BusOperatorRepositoryAdapter`; `EmailVerificationRepositoryAdapter`/`RoleManagementRepositoryAdapter` dùng `JdbcTemplate` |
+| `data/adapter` | Hiện thực business repository port bằng JPA hoặc JDBC | `BookingRepositoryAdapter`, `TripRepositoryAdapter`, `TripBookingRepositoryAdapter`, `BusOperatorRepositoryAdapter`; `EmailVerificationRepositoryAdapter`/`RoleManagementRepositoryAdapter` dùng `JdbcTemplate` |
 | `data/mapper` | Chuyển đổi domain ↔ persistence entity | `BookingPersistenceMapper`, `TripPersistenceMapper`, `OperatorPersistenceMapper` |
 
 Ví dụ đường đi của dữ liệu đặt vé:
@@ -233,7 +233,7 @@ Ví dụ ở mức thành phần, không thay thế đặc tả API:
 3. `BookingController` tiếp nhận DTO, sau đó chuyển yêu cầu đến `BookingService`.
 4. `BookingService` kiểm tra điều kiện chuyến xe, số lượng vé và quyền nghiệp vụ cần thiết.
 5. Service gọi repository port, adapter sử dụng Spring Data JPA và persistence mapper để đọc/ghi dữ liệu.
-6. Trong `@Transactional`, service khóa Trip bằng `PESSIMISTIC_WRITE`, giảm ghế bằng update có điều kiện không âm rồi lưu Booking; lỗi lưu làm rollback cả phần giảm ghế.
+6. Trong `@Transactional`, service gọi `TripBookingRepository.lockForBooking` để khóa Trip bằng `PESSIMISTIC_WRITE` và nhận `BookingTripSnapshot` (ID, trạng thái, giá, ghế trống), không dựng `Trip` chi tiết; sau đó `reserveSeats` giảm ghế bằng update có điều kiện không âm rồi lưu Booking. Lỗi lưu làm rollback cả phần giảm ghế.
 7. Kết quả được ánh xạ thành `BookingResponse` và trả về client.
 
 Đối với các yêu cầu đồng thời, code kết hợp transaction, khóa bi quan và cập nhật ghế có điều kiện. Hủy Booking khóa Booking rồi Trip, kiểm tra capacity, hoàn ghế rồi cập nhật trạng thái trong cùng giao dịch. `TripBookingIntegrationTest` có test cạnh tranh ghế cuối và rollback; kết quả pass hiện tại chưa xác minh.
@@ -303,7 +303,7 @@ Mũi tên adapter trỏ đến port biểu thị **dependency inversion**: Busin
 | API / HTTP | `AuthHttpIntegrationTest`, `BookingControllerTest`, `AuthRateLimitHttpTest`, `ProfileAndRolesIntegrationTest` |
 | Business | `BookingServiceTest`, `TripServiceTest`, `OperatorServiceTest`, `RoleManagementServiceTest` |
 | Persistence | `AuthPersistenceIntegrationTest`, `TripRepositoryAdapterTest` |
-| Integration | `TripBookingIntegrationTest`, `CoreCatalogWorkflowIntegrationTest`, `AdminManagementIntegrationTest` |
+| Integration | `TripBookingIntegrationTest`, `BookingCreateSqlIntegrationTest` (ghi SQL Hibernate, xác nhận tạo booking không truy vấn bảng quan hệ), `CoreCatalogWorkflowIntegrationTest`, `AdminManagementIntegrationTest` |
 | Security / Notification | `JwtAuthenticationFilterTest`, `JwtServiceTest`, `AuthRequestRateLimiterTest`, `SmtpEmailVerificationSenderTest` |
 
 Bài kiểm thử tải trên Kaggle CPU được lưu riêng trong `load-tests/`, tránh nhầm với unit/integration test Maven.
