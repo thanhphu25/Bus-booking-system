@@ -135,7 +135,15 @@ Luồng hiện tại có thể đối chiếu tại [BookingService](../src/main
 - Chỉ chuyển **luồng tạo booking** sang port mới. Hủy booking vẫn cần sức chứa xe để hoàn ghế; quản trị Trip cũng cần dữ liệu riêng. Không thay mapper chung thành bản thiếu thông tin làm hỏng các use case đó.
 - Không đồng thời đổi index, pool, JWT lookup, batching hay chính sách nghiệp vụ trong cặp P1/C. Sau tích hợp, khối tạo mới của B sử dụng đường ghi của C; replay của B không đi qua đường đó.
 
-**Trạng thái triển khai (nhánh `feature/booking-trip-snapshot`):** đã thêm `TripBookingRepository`, `BookingTripSnapshot`, `TripBookingRepositoryAdapter` và chuyển `BookingService.create` sang port mới; cancel/quản trị giữ `TripRepository`. Trace Hibernate trong `BookingCreateSqlIntegrationTest`: đường khóa chi tiết của P1 phát sinh 1 SELECT khóa `trips` + 5 SELECT quan hệ (`routes`, `locations` ×2, `vehicles`, `bus_operators`); đường create của C chỉ còn 1 SELECT khóa `trips`, 1 UPDATE `trips`, 1 INSERT `bookings`. Đây là trace trên DB test local, chưa phải số đo hiệu năng; số Kaggle điền sau khi chạy 5.3.
+**Trạng thái triển khai (nhánh `feature/booking-trip-snapshot`):** đã thêm `TripBookingRepository`, `BookingTripSnapshot`, `TripBookingRepositoryAdapter` và chuyển `BookingService.create` sang port mới; cancel/quản trị giữ `TripRepository`. Trace Hibernate trong `BookingCreateSqlIntegrationTest`: đường khóa chi tiết của P1 phát sinh 1 SELECT khóa `trips` + 5 SELECT quan hệ (`routes`, `locations` ×2, `vehicles`, `bus_operators`); đường create của C chỉ còn 1 SELECT khóa `trips`, 1 UPDATE `trips`, 1 INSERT `bookings`. Đây là trace trên DB test local.
+
+**Kết quả Kaggle (P1 `fd6b5f3` với C `a6c81ec`, [bộ đo](../load-tests/phase2/c/README.md), [kết quả](../load-tests/results/phase2/phase2-c-20261126T010717Z/README.md)).**
+- **Cấu hình:** 4 CPU logic. Ba workload: tham chiếu 1.000 chuyến × 4 ghế; phân tán và tập trung với 4.000 ý định trên 100 chuyến × 40 ghế. Không gửi key, 10 và 20 users, `wait_time = 0`, 3 lượt, đổi thứ tự P1/C giữa các lượt.
+- **Đúng đắn:** 36/36 lượt đạt đối soát. Cả 18 cặp P1/C cho cùng kết quả theo ý định, cùng HTTP status và cùng tập trường JSON.
+- **SQL và CPU:** SQL/booking giảm từ 11 xuống 7, SELECT quan hệ giảm từ 5 xuống 0. CPU PostgreSQL/booking giảm 14–27% và RPS thành công tăng 8–16% ở mọi cấu hình.
+- **Tải tập trung:** p95 giảm 23% (10 users) và 12% (20 users). RPS tăng 13–16%. Khoảng min–max của hai bản không chồng nhau ở cả 3 lượt.
+- **Chưa kết luận được:** p95 ở tải phân tán chỉ giảm 3–4% và nằm trong dao động. p50 ở tải tập trung với 10 users tăng 21,5%.
+- **Giới hạn:** Locust chạy chung CPU với backend và PostgreSQL. Chờ khóa là tỷ lệ mẫu có backend đang chờ, không phải thời gian chờ. JAR C chứa B nên có thêm 1 SQL mỗi booking.
 
 ### 5.3. Kịch bản trước/sau trên Kaggle
 

@@ -228,7 +228,26 @@ Quyết định và đánh đổi:
 - Snapshot chỉ hợp lệ trong transaction hiện tại, không cache, không dùng lại cho booking khác. Business vẫn tự kiểm tra trạng thái, đủ ghế và tính giá.
 - Chỉ luồng tạo chuyển sang port mới. Hủy booking cần `seatCapacity` của xe để hoàn ghế và quản trị Trip cần dữ liệu chi tiết, nên vẫn dùng `TripRepository` và mapper cũ.
 - Với idempotency của Pha 2B, chỉ request giành được key mới đi vào khối tạo này; request replay không khóa Trip.
-- Số SQL giảm là kết quả trace (`BookingCreateSqlIntegrationTest`). Tác động lên p95/RPS/CPU và chờ khóa phải lấy từ bài đo Kaggle phân tán/tập trung, chưa kết luận tại đây.
+- Số SQL giảm được xác nhận ở hai mức: trace Hibernate trong `BookingCreateSqlIntegrationTest`, và `pg_stat_statements` trên Kaggle.
+
+**Kết quả đo trên Kaggle CPU (P1 `fd6b5f3` với C `a6c81ec`).** Cấu hình: 4 CPU logic, request không có `Idempotency-Key`, 10 và 20 users, `wait_time = 0`, mỗi cấu hình 3 lượt. Mỗi ô ghi trung vị của 3 lượt.
+
+| Chỉ số | Pha 1 | Pha 2C |
+|---|---:|---:|
+| SQL / booking (tổng, gồm xác thực JWT) | 11 | 7 |
+| SELECT quan hệ / booking | 5 | 0 |
+| CPU PostgreSQL / booking | 1,26–1,67 ms | 0,98–1,44 ms (−14% đến −27%) |
+| Tải tập trung 100 chuyến × 40 ghế · p95 (10 / 20 users) | 165,7 / 203,0 ms | 127,5 / 178,1 ms |
+| Tải tập trung · RPS thành công (10 / 20 users) | 204,7 / 205,6 | 231,1 / 237,8 |
+| Tải phân tán · p95 (10 / 20 users) | 54,1 / 109,7 ms | 51,8 / 106,3 ms (trong dao động) |
+
+Cả 36 lượt đều đúng nghiệp vụ: mỗi ý định đúng 1 booking, cân bằng ghế đúng, P1 và C cho cùng kết quả và cùng JSON. Cải thiện độ trễ và thông lượng rõ nhất ở tải tập trung, nơi nhiều request tranh cùng một dòng Trip. Lợi ích đến từ việc bớt round-trip JDBC và bớt dựng entity trong lúc giữ khóa, không phải từ thời gian thực thi SQL phía DB: 5 SELECT quan hệ chỉ tốn khoảng 0,06 ms/booking trên PostgreSQL.
+
+Có hai điểm chưa kết luận được:
+- p95 ở tải phân tán giảm nhưng nằm trong dao động giữa các lượt.
+- Ở tải tập trung với 10 users, p50 của C tăng 21,5%.
+
+Bộ JAR C chứa cả B, nên có thêm 1 câu `SHOW TRANSACTION ISOLATION LEVEL` mỗi booking. [Phân tích chi tiết và giới hạn](../load-tests/results/phase2/phase2-c-20261126T010717Z/README.md).
 
 ### Đăng ký và xác thực email
 

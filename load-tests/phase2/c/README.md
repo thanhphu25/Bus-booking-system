@@ -33,6 +33,8 @@ Chạy local (cần PostgreSQL có `shared_preload_libraries=pg_stat_statements`
 PHASE2_PG_PASSWORD=... python load-tests/phase2/c/benchmark.py --java "$JAVA_HOME/bin/java" --pg-port 55434 --pg-pid <PID postmaster> --p1-jar busbooking-p1.jar --c-jar busbooking-c.jar --c-sha <SHA C> --output out --users 10 --repetitions 1
 ```
 
+Kết quả chính thức đầu tiên: [phase2-c-20261126T010717Z](../../results/phase2/phase2-c-20261126T010717Z/README.md).
+
 ## Đọc kết quả
 
 | File | Nội dung |
