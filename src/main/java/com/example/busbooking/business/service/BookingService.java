@@ -2,6 +2,8 @@ package com.example.busbooking.business.service;
 
 import com.example.busbooking.business.port.repository.BookingIdempotencyRepository;
 import com.example.busbooking.business.port.repository.BookingRepository;
+import com.example.busbooking.business.port.repository.BookingTripSnapshot;
+import com.example.busbooking.business.port.repository.TripBookingRepository;
 import com.example.busbooking.business.port.repository.TripRepository;
 import com.example.busbooking.domain.enums.BookingStatus;
 import com.example.busbooking.domain.enums.TripStatus;
@@ -25,12 +27,15 @@ import java.util.UUID;
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final TripRepository tripRepository;
+    private final TripBookingRepository tripBookingRepository;
     private final BookingIdempotencyRepository idempotencyRepository;
 
     public BookingService(BookingRepository bookingRepository, TripRepository tripRepository,
+                          TripBookingRepository tripBookingRepository,
                           BookingIdempotencyRepository idempotencyRepository) {
         this.bookingRepository = bookingRepository;
         this.tripRepository = tripRepository;
+        this.tripBookingRepository = tripBookingRepository;
         this.idempotencyRepository = idempotencyRepository;
     }
 
@@ -81,20 +86,22 @@ public class BookingService {
     private Booking createBooking(Long userId, Long tripId, String passengerName,
                                   String passengerPhone, int quantity) {
         if (quantity <= 0) throw new BusinessException("Quantity must be greater than zero");
-        Trip trip = tripRepository.findByIdForUpdate(tripId)
+        // The row lock is held until commit: lock -> check -> reserve seats -> save booking.
+        // Only the scalar snapshot is read; the detailed Trip graph is not needed to decide a booking.
+        BookingTripSnapshot trip = tripBookingRepository.lockForBooking(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
-        if (trip.getStatus() != TripStatus.SCHEDULED) {
+        if (trip.status() != TripStatus.SCHEDULED) {
             throw new BusinessException("Trip is not available for booking");
         }
-        if (trip.getAvailableSeats() < quantity) {
+        if (trip.availableSeats() < quantity) {
             throw new InsufficientSeatsException("Not enough available seats");
         }
-        if (!tripRepository.updateAvailableSeats(tripId, -quantity)) {
+        if (!tripBookingRepository.reserveSeats(tripId, quantity)) {
             throw new InsufficientSeatsException("Not enough available seats");
         }
-        BigDecimal total = trip.getPrice().multiply(BigDecimal.valueOf(quantity));
+        BigDecimal total = trip.price().multiply(BigDecimal.valueOf(quantity));
         Booking booking = new Booking(null, "BK-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20), userId, tripId,
-                passengerName, passengerPhone, quantity, trip.getPrice(), total,
+                passengerName, passengerPhone, quantity, trip.price(), total,
                 BookingStatus.CONFIRMED, LocalDateTime.now());
         return bookingRepository.save(booking);
     }

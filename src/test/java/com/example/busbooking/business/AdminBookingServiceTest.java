@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 
 class AdminBookingServiceTest {
     BookingRepository repository = mock(BookingRepository.class);
-    BookingService service = new BookingService(repository, mock(TripRepository.class),
+    BookingService service = new BookingService(repository, mock(TripRepository.class), mock(TripBookingRepository.class),
             mock(BookingIdempotencyRepository.class));
 
     @Test void filtersAreDelegatedAndResultsAreNotRestrictedToCurrentUser() {
